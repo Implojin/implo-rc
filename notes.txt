@@ -1,0 +1,41 @@
+
+
+NB: The concept of randomized monster spellbooks has been removed:
+
+https://github.com/crawl/crawl/commit/bc7614a589d44ba8a134ede3e547d9d85f470a25
+this commit removed multi-books as-a-thing from most mons, except deep elf mages and liches
+
+https://github.com/crawl/crawl/commit/97bf95f3a4eb27709f8eba932d03cda88303a32d
+https://github.com/crawl/crawl/commit/4c84cb832125a208706bc18fce23bec912d4fb57
+deep elf mages and liches multibooks, removed
+
+https://github.com/crawl/crawl/commit/3d1ca0d2d81d10d4c5f25e9f2ea6d83abcc60257
+this commit removed the underlying multi-book code
+
+At time of writing, dcss.io was never regenerated after those commits:
+https://doc.dcss.io/modules/monster.html#monster.info:spells
+still references the obsolete behavior.
+
+https://github.com/crawl/crawl/commit/3d1ca0d2d81d10d4c5f25e9f2ea6d83abcc60257
+Part of this commit updated the moninf_get_spells function, as monster
+multi-books were removed. This function comment in l-moninf.cc may read as
+though monster multi-books remain a concept somewhere, but they aren't.
+Currently, this lua bind appears to return an un-named table representing {book},
+containing a table of {spell names}.
+
+note: this bind does *not* return draconian breath attacks as known spells.
+I have no idea if any other monster natural abilities are missed by this bind.
+I briefly tested some non-draconians, and their natural abilities were all
+listed as spells, but it's probably safer to assume this bind is unreliable.
+
+-----
+
+note: if i do a tostring() on a raw mons table entry like this:
+
+table.insert(threat_table, {mons, threat[2]})
+crawl.mpr(tostring(threat_table[1]))
+
+crawl emits some memory hexadecimal (probably the hex of the userdata mons subtable pointer?)
+
+-----
+
