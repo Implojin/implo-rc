@@ -18,6 +18,8 @@ local ATT_NEUTRAL = 1
 local mons_table = {}
 local threat_table = {}
 
+local DEBUG_MONS_STATUS = false
+
 local status = {
     _update_mons = function()
         local LOS = you.los()
@@ -42,7 +44,11 @@ local status = {
         {"Paralyse", you.willpower() < 3, "low Will"} ,
         {"Petrify", you.willpower() < 3, "low Will"} ,
         {"Banishment", you.willpower() < 3, "low Will"} ,
-        {"Stunning Burst", you.res_shock() < 1, "no rElec"} , }
+        {"Stunning Burst", you.res_shock() < 1, "no rElec"} ,
+        {"Paralysis Gaze", mons:status("fully charged") == true, "channelling irresistable paralysis gaze"} , }
+
+        -- when in debug mode, print the monster status table to mpr
+        if DEBUG_MONS_STATUS == true then crawl.mpr(mons:name() .. " status: " .. mons:status() ) end
 
         -- TODO: multiple conditionals for some warnings? maybe?
         -- Are any multi-conditional warnings needed anywhere?
