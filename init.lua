@@ -45,7 +45,8 @@ local status = {
         {"Petrify", you.willpower() < 3, "low Will"} ,
         {"Banishment", you.willpower() < 3, "low Will"} ,
         {"Stunning Burst", you.res_shock() < 1, "no rElec"} ,
-        {"Paralysis Gaze", mons:status("fully charged") == true, "channelling irresistable paralysis gaze"} , }
+        {"Paralysis Gaze", mons:status("fully charged") == true, "channelling irresistable paralysis gaze"} ,
+        {"Confusion Gaze", you.willpower() < 3, "low Will"} , }
 
         -- when in debug mode, print the monster status table to mpr
         if DEBUG_MONS_STATUS == true then crawl.mpr(mons:name() .. " status: " .. mons:status() ) end
