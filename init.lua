@@ -100,7 +100,10 @@ local status = {
         -- TODO: Improve this? I'm not sure a static will check is ideal here; does monster HD/XL/whatever factor in?
         -- TODO: Add hysteresis to the warnings: For wands especially, forcing more every turn is obnoxious.
         {conditions = {check_tdesc(mons, "wand of paralysis"), you.willpower() < 3},
-             reason = "Wand of Paralysis and low Will"} , }
+             reason = "Wand of Paralysis and low Will"} ,
+        -- comparing "distort" instead of "distortion" works against Rift, randarts, and panlord "distorting touch"
+        {conditions = {check_tdesc(mons, "[dD]istort"), you.branch() ~= "Zig"},
+             reason = "Distortion weapon!"} , }
 
         for _,threat in ipairs(danger_table) do
             if all_true(threat.conditions) then
