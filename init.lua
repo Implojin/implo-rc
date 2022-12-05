@@ -14,11 +14,21 @@ function check(mons, ability_string)
     return false
 end
 
+-- lua string.find() returns an index, not a bool, if a pattern match is found,
+-- therefore string.find() comparisons need to include ~= nil
+-- this function is syntactic sugar to help the danger table inlines read a little better
+function check_desc(mons, string)
+    local desc = mons:desc(true)
+    if string.find(desc, string) ~= nil then return true end
+    return false
+end
+
 local ATT_NEUTRAL = 1
 local mons_table = {}
 local threat_table = {}
 
 local DEBUG_MONS_STATUS = false
+local DEBUG_MONS_DESC = false
 
 local function all_true(table)
     for _,v in ipairs(table) do
@@ -46,6 +56,7 @@ local status = {
     _check_threat = function(self,mons)
         -- when in debug mode, print the monster status table to mpr
         if DEBUG_MONS_STATUS == true then crawl.mpr(mons:name() .. " status: " .. mons:status() ) end
+        if DEBUG_MONS_DESC == true then crawl.mpr(mons:name() .. " desc: " .. mons:desc(true) ) end
 
 -- begin danger table
         -- TODO: Fill out the remaining danger conditions:
@@ -56,8 +67,7 @@ local status = {
         -- e.g. string.find(string.lower(m:desc(), "paralys"))
         -- or string.find(m:desc(), "[pP]aralys")   ??
         -- TODO: compare mons spellpower / success rate (whichever of these is exposed?)
-        -- against player Will for Paralyse/Banish/Petrify,
-        -- do the same for player rPois vs. AF_POISON_PARALYSIS, etc.
+        -- against player Will for Paralyse/Banish/Petrify, etc.
         local danger_table = {
         {conditions = {check(mons, "Paralyse"), you.willpower() < 3},
              reason = "Paralyse and low Will"} ,
@@ -74,8 +84,13 @@ local status = {
         {conditions = {check(mons, "Paralysis Gaze"), mons:status("fully charged") == true},
              reason = "channelling irresistable Paralysis Gaze!"} ,
         {conditions = {check(mons, "Confusion Gaze"), you.willpower() < 3},
-             reason = "Confusion Gaze and low Will"} , }
-        
+             reason = "Confusion Gaze and low Will"} ,
+        -- XXX: As far as I can tell, the only way to pull attack flavour (AF_WHATEVER) data is
+        -- through string.find(mons:desc()), this doesn't appear to be exposed anywhere else in the clua
+        {conditions = {check_desc(mons, "poison and cause paralysis or slowing"), you.res_poison() < 1},
+             reason = "AF_POISON_PARALYSE and no rPois"} , }
+
+
         for _,threat in ipairs(danger_table) do
             if all_true(threat.conditions) then
                 table.insert(threat_table, {mons, threat.reason})
