@@ -20,6 +20,14 @@ local threat_table = {}
 
 local DEBUG_MONS_STATUS = false
 
+local function all_true(table)
+    for _,v in ipairs(table) do
+        if v == nil then return false end
+        if not (v == true) then return false end
+    end
+    return true
+end
+
 local status = {
     _update_mons = function()
         local LOS = you.los()
@@ -35,37 +43,48 @@ local status = {
             end
         end
     end,
-    -- TODO: generic string.find(m:desc()) matching catch-alls, 
-    -- for dangerous abils / new mons that I haven't specifically added checks for
-    -- e.g. string.find(string.lower(m:desc(), "paralys"))
-    -- or string.find(m:desc(), "[pP]aralys")   ??
     _check_threat = function(self,mons)
-        local dangerous_abils_table = {
-        {"Paralyse", you.willpower() < 3, "low Will"} ,
-        {"Petrify", you.willpower() < 3, "low Will"} ,
-        {"Banishment", you.willpower() < 3, "low Will"} ,
-        {"Stunning Burst", you.res_shock() < 1, "no rElec"} ,
-        {"Paralysis Gaze", mons:status("fully charged") == true, "channelling irresistable paralysis gaze"} ,
-        {"Confusion Gaze", you.willpower() < 3, "low Will"} , }
-
         -- when in debug mode, print the monster status table to mpr
         if DEBUG_MONS_STATUS == true then crawl.mpr(mons:name() .. " status: " .. mons:status() ) end
 
-        -- TODO: multiple conditionals for some warnings? maybe?
-        -- Are any multi-conditional warnings needed anywhere?
-        for _,threat in ipairs(dangerous_abils_table) do
-            if check(mons, threat[1]) == true and threat[2] == true then
-                -- mons, "reason"
-                table.insert(threat_table, {mons, threat[1] .. " and " .. threat[3]})
+-- begin danger table
+        -- TODO: Fill out the remaining danger conditions:
+        -- Need to finish adding all missing high danger monster spells,
+        -- and also check things that aren't in mons:spells(), like wands, weapons, or monster descriptions
+        -- TODO: add generic string.find(m:desc()) matching catch-all danger conditions,
+        -- to make the script resilient vs. new mons / new spells / unhandled spells
+        -- e.g. string.find(string.lower(m:desc(), "paralys"))
+        -- or string.find(m:desc(), "[pP]aralys")   ??
+        -- TODO: compare mons spellpower / success rate (whichever of these is exposed?)
+        -- against player Will for Paralyse/Banish/Petrify,
+        -- do the same for player rPois vs. AF_POISON_PARALYSIS, etc.
+        local danger_table = {
+        {conditions = {check(mons, "Paralyse"), you.willpower() < 3},
+             reason = "Paralyse and low Will"} ,
+        {conditions = {check(mons, "Petrify"), you.willpower() < 3},
+             reason = "Petrify and low Will"} ,
+        {conditions = {check(mons, "Banishment"), you.willpower() < 3},
+             reason = "Banishment and low Will"} ,
+        {conditions = {check(mons, "Stunning Burst"), you.res_shock() < 1},
+             reason = "Stunning Burst (paralyse) and no rElec"} ,
+        -- TODO: I'd like to deduplicate this but atm it's not worth the code, revisit this after adding all threat conditions
+        -- (if there are enough conditions that need dedup I can change all reasons to a function return and update the caller)
+        {conditions = {check(mons, "Paralysis Gaze"), mons:status("fully charged") ~= true},
+             reason = "irresistable Paralysis Gaze in LOS, but not channelling yet"} ,
+        {conditions = {check(mons, "Paralysis Gaze"), mons:status("fully charged") == true},
+             reason = "channelling irresistable Paralysis Gaze!"} ,
+        {conditions = {check(mons, "Confusion Gaze"), you.willpower() < 3},
+             reason = "Confusion Gaze and low Will"} , }
+        
+        for _,threat in ipairs(danger_table) do
+            if all_true(threat.conditions) then
+                table.insert(threat_table, {mons, threat.reason})
             end
         end
+-- end danger table
     end,
     _update_threats = function(self)
         threat_table = {}
-        -- TODO: compare mons spellpower / success rate (whichever of these is exposed?)
-        -- against player Will for Paralyse/Banish/Petrify,
-        -- do the same for player rPois vs. AF_POISON_PARALYSIS,
-        -- player rElec vs. Stunning Burst, etc.
         for _,mons in ipairs(mons_table) do
             self:_check_threat(mons)
         end
