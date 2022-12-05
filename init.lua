@@ -23,12 +23,19 @@ function check_desc(mons, string)
     return false
 end
 
+function check_tdesc(mons, string)
+    local desc = mons:target_desc()
+    if string.find(desc, string) ~= nil then return true end
+    return false
+end
+
 local ATT_NEUTRAL = 1
 local mons_table = {}
 local threat_table = {}
 
 local DEBUG_MONS_STATUS = false
 local DEBUG_MONS_DESC = false
+local DEBUG_MONS_TARGET_DESC = false
 
 local function all_true(table)
     for _,v in ipairs(table) do
@@ -57,6 +64,7 @@ local status = {
         -- when in debug mode, print the monster status table to mpr
         if DEBUG_MONS_STATUS == true then crawl.mpr(mons:name() .. " status: " .. mons:status() ) end
         if DEBUG_MONS_DESC == true then crawl.mpr(mons:name() .. " desc: " .. mons:desc(true) ) end
+        if DEBUG_MONS_TARGET_DESC == true then crawl.mpr(mons:name() .. " target_desc: " .. mons:target_desc() ) end
 
 -- begin danger table
         -- TODO: Fill out the remaining danger conditions:
@@ -88,8 +96,11 @@ local status = {
         -- XXX: As far as I can tell, the only way to pull attack flavour (AF_WHATEVER) data is
         -- through string.find(mons:desc()), this doesn't appear to be exposed anywhere else in the clua
         {conditions = {check_desc(mons, "poison and cause paralysis or slowing"), you.res_poison() < 1},
-             reason = "AF_POISON_PARALYSE and no rPois"} , }
-
+             reason = "AF_POISON_PARALYSE and no rPois"} ,
+        -- TODO: Improve this? I'm not sure a static will check is ideal here; does monster HD/XL/whatever factor in?
+        -- TODO: Add hysteresis to the warnings: For wands especially, forcing more every turn is obnoxious.
+        {conditions = {check_tdesc(mons, "wand of paralysis"), you.willpower() < 3},
+             reason = "Wand of Paralysis and low Will"} , }
 
         for _,threat in ipairs(danger_table) do
             if all_true(threat.conditions) then
