@@ -103,7 +103,9 @@ local status = {
              reason = "Wand of Paralysis and low Will"} ,
         -- comparing "distort" instead of "distortion" works against Rift, randarts, and panlord "distorting touch"
         {conditions = {check_tdesc(mons, "[dD]istort"), you.branch() ~= "Zig"},
-             reason = "Distortion weapon!"} , }
+             reason = "Distortion weapon!"} ,
+        {conditions = {check(mons, "Malmutate"), you.branch() ~= "Zig"},
+             reason = "Malmutator in LOS"} , }
 
         for _,threat in ipairs(danger_table) do
             if all_true(threat.conditions) then
