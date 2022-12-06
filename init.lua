@@ -128,6 +128,8 @@ local status = {
              reason = "Confusion Gaze and low Will"} ,
         -- XXX: As far as I can tell, the only way to pull attack flavour (AF_WHATEVER) data is
         -- through string.find(mons:desc()), this doesn't appear to be exposed anywhere else in the clua
+        -- TODO: check against the other attack flavour descriptors to see if there are more that should be handled here
+        -- https://github.com/crawl/crawl/blob/master/crawl-ref/source/describe.cc#L4292
         {conditions = {check_desc(mons, "poison and cause paralysis or slowing"), you.res_poison() < 1},
              reason = "AF_POISON_PARALYSE and no rPois"} ,
         -- TODO: Improve this? I'm not sure a static will check is ideal here; does monster HD/XL/whatever factor in?
@@ -142,7 +144,9 @@ local status = {
              reason = "Malmutator in LOS"} ,
         -- XXX: I'd prefer to check lof against "Malmutate" here, but it seems like spells.path() only works with player spells?
         {conditions = {check(mons, "Malmutate"), check_lof(mons), you.branch() ~= "Zig"},
-             reason = "Malmutator in LOF!"} , }
+             reason = "Malmutator in LOF!"} ,
+        {conditions = {mons:name() == "orb of fire", you.res_fire() < 3},
+             reason = "Orb of Fire and low rF"} , }
 
         for _,threat in ipairs(danger_table) do
             if all_true(threat.conditions) then
