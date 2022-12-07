@@ -506,7 +506,9 @@ local status = {
              reason = "Flash Freeze and not rC++, careful!"} ,
         -- josephina, wendigo
         {conditions = {check(mons, "Seracfall"), you.res_cold() < 3},
-             reason = "Seracfall and not rC+++, careful!"} , }
+             reason = "Seracfall and not rC+++, careful!"} ,
+        {conditions = {check(mons, "Doom Howl"), mons:is("ready_to_howl"), you.branch() ~= "Zig"},
+             reason = "Doom Howl in LOS, hex it or something"} , }
 
         for _,threat in ipairs(danger_table) do
             if all_true(threat.conditions) then
