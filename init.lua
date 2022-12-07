@@ -451,7 +451,9 @@ local status = {
         {conditions = {mons:is_unique() == true},
              reason = "Unique monster, careful!"} ,
         {conditions = {check_rare_ood(mons)},
-             reason = "OOD monster, careful!"} , }
+             reason = "OOD monster, careful!"} ,
+        {conditions = {check(mons, "Creeping Frost"), you.res_cold() < 1},
+             reason = "Creeping Frost and no rC"} ,}
 
         for _,threat in ipairs(danger_table) do
             if all_true(threat.conditions) then
