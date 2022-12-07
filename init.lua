@@ -359,6 +359,18 @@ function debug_mpr_current_threats()
     end
 end
 
+-- copied from ff.rc, which used a clua re-implementation of explorer.rare_ood() from /dat/dlua/explorer.dlua
+function check_rare_ood(m)
+    local you_depth = you.depth()
+    local mdepth = m:avg_local_depth()
+    local mprob = m:avg_local_prob()
+    local br_depth = you.depth_fraction()
+    -- explorer.rare_ood() used ood_threshold = math.max(2, you_depth / 3),
+    -- we use a fixed OOD threshold so it doesn't grow later
+    local ood_threshold = 3
+    return mdepth > you_depth + ood_threshold and mprob < 2
+end
+
 local status = {
     _update_mons = function()
         local LOS = you.los()
@@ -437,7 +449,9 @@ local status = {
         {conditions = {mons:name() == "orb of fire", you.res_fire() < 3},
              reason = "Orb of Fire and low rF"} ,
         {conditions = {mons:is_unique() == true},
-             reason = "Unique monster, careful!"} , }
+             reason = "Unique monster, careful!"} ,
+        {conditions = {check_rare_ood(mons)},
+             reason = "OOD monster, careful!"} , }
 
         for _,threat in ipairs(danger_table) do
             if all_true(threat.conditions) then
