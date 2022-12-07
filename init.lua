@@ -500,7 +500,10 @@ local status = {
         {conditions = {check(mons, "Glaciate"), you.res_cold() < 3},
              reason = "Glaciate and not rC+++, watch out!"} ,
         {conditions = {check(mons, "Polar Vortex"), you.res_cold() < 3},
-             reason = "Polar Vortex and not rC+++, careful!"} , }
+             reason = "Polar Vortex and not rC+++, careful!"} ,
+        -- antaeus, josephina, rime drakes
+        {conditions = {check(mons, "Flash Freeze"), you.res_cold() < 2},
+             reason = "Flash Freeze and not rC++, careful!"} , }
 
         for _,threat in ipairs(danger_table) do
             if all_true(threat.conditions) then
