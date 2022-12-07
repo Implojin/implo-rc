@@ -307,6 +307,7 @@ local current_threats = {}
 local known_threats = {}
 
 local DEBUG_MONS_STATUS = false
+local DEBUG_MONS_FLAGS = false
 local DEBUG_MONS_DESC = false
 local DEBUG_MONS_TARGET_DESC = false
 local DEBUG_LOF_PATH = false
@@ -359,6 +360,17 @@ function debug_mpr_current_threats()
     end
 end
 
+function debug_mpr_mons_flags(mons)
+    crawl.mpr(mons:name() .. " flags: ")
+    local flags = {}
+    flags = mons:flags()
+    if next(flags) ~= nil then
+        for _,flag in ipairs(flags) do
+            crawl.mpr(flag .. " | ")
+        end
+    end
+end
+
 -- copied from ff.rc, which used a clua re-implementation of explorer.rare_ood() from /dat/dlua/explorer.dlua
 function check_rare_ood(m)
     local you_depth = you.depth()
@@ -396,6 +408,7 @@ local status = {
     _check_threat = function(self,mons)
         -- when in debug mode, print the monster status table to mpr
         if DEBUG_MONS_STATUS == true then crawl.mpr(mons:name() .. " status: " .. mons:status() ) end
+        if DEBUG_MONS_FLAGS == true then debug_mpr_mons_flags(mons) end
         if DEBUG_MONS_DESC == true then crawl.mpr(mons:name() .. " desc: " .. mons:desc(true) ) end
         if DEBUG_MONS_TARGET_DESC == true then crawl.mpr(mons:name() .. " target_desc: " .. mons:target_desc() ) end
         if DEBUG_LOF_PATH == true then check_lof(mons, "Magic Dart") end
@@ -453,7 +466,28 @@ local status = {
         {conditions = {check_rare_ood(mons)},
              reason = "OOD monster, careful!"} ,
         {conditions = {check(mons, "Creeping Frost"), you.res_cold() < 1},
-             reason = "Creeping Frost and no rC"} ,}
+             reason = "Creeping Frost and no rC"} ,
+        -- Most major rElec mons have Lightning Bolt:
+        -- This covers electric golems, titans, storm dragons, antaeus, multiple uniques;
+        -- also many smaller mons, inc. annihilators, air mages.
+        {conditions = {check(mons, "Lightning Bolt"), you.res_shock() < 1},
+             reason = "Lightning Bolt and no rElec"} ,
+        -- Chain Lightning only exists on Nikola at present, but this check is here in case some dev gets creative
+        {conditions = {check(mons, "Chain Lightning"), you.res_shock() < 1},
+             reason = "Chain Lightning and no rElec"} ,
+        {conditions = {mons:name() == "Nikola", you.res_shock() < 1},
+             reason = "Nikola and no rElec"} ,
+        {conditions = {mons:name() == "Nikola", check_tdesc(mons, "[sS]ilenced") ~= true and mons:status("waterlogged") ~= true},
+             reason = "Nikola in LOS and not silenced or waterlogged"} ,
+        -- shock serpents, electric eels, lightning spires
+        {conditions = {check(mons, "Electrical Bolt"), you.res_shock() < 1},
+             reason = "Electrical Bolt and no rElec"} ,
+        -- lom lobon
+        {conditions = {check(mons, "Conjure Ball Lightning"), you.res_shock() < 1},
+             reason = "Conjure Ball Lightning and no rElec"} ,
+        -- ironbound thunderhulks, lodul
+        {conditions = {check(mons, "Call Down Lightning"), you.res_shock() < 1},
+             reason = "Call Down Lightning and no rElec"} , }
 
         for _,threat in ipairs(danger_table) do
             if all_true(threat.conditions) then
