@@ -487,7 +487,12 @@ local status = {
              reason = "Conjure Ball Lightning and no rElec"} ,
         -- ironbound thunderhulks, lodul
         {conditions = {check(mons, "Call Down Lightning"), you.res_shock() < 1},
-             reason = "Call Down Lightning and no rElec"} , }
+             reason = "Call Down Lightning and no rElec"} ,
+        {conditions = {string.find(mons:name(), "[sS]imulacrum") ~= nil, you.res_cold() < 1},
+             reason = "simulacrum and no rC, careful"} ,
+        {conditions = {string.find(mons:name(), "[sS]imulacrum") ~= nil, string.find(mons:speed_description(), "fast") ~= nil,
+                       you.res_cold() < 1},
+             reason = mons:speed_description() .. " simulacrum and no rC, watch out!!"} , }
 
         for _,threat in ipairs(danger_table) do
             if all_true(threat.conditions) then
