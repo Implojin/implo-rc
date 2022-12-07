@@ -1,4 +1,278 @@
+# TEAMCAPTAIN 
+
+travel_delay = -1
+explore_delay = -1
+rest_delay = -1
+view_delay = 0
+show_travel_trail = true
+use_animations = false
+
+# megazigging
+show_more = false
+
+# try to prevent autopick from being interrupted during zig cleanup?
+travel_key_stop = false
+
+# re-set travel_open_doors = false, this was set in my old rc but removed -.-
+travel_open_doors = avoid
+
+# try to reduce keyboard delay for realtime games
+# for local games, this can = keyboard debounce time (in milliseconds),
+# but for online play, let's set it to server ping (in ms)
+tile_runrest_rate = 0
+tile_key_repeat_delay = 43
+
+# prevent autofight from changing behavior at arbitrary HP threshold
+autofight_stop = 0
+
+# try to prevent movement key tapping deaths due to disabled mores
+# note: you need to force_more for this to work with show_more = false
+hp_warning = 60
+
+# allow specific force_mores through show_more = false
+force_more_message = 
+force_more_message += LOW HITPOINT WARNING
+
+# since we're clearing default force_mores, re-enable portal, zot clock,
+# and disto announcements, as not to miss them
+
+# default force_mores can be found at:
+# https://github.com/crawl/crawl/blob/master/crawl-ref/source/dat/defaults/messages.txt#L89
+# (some of these might be helpful to re-add later)
+
+## Zot is coming!
+force_more_message += You have lingered too long
+force_more_message += Zot draws nearer
+force_more_message += Zot has nearly found you
+force_more_message += Zot already knows
+force_more_message += Zot's attention fixes on you
+# Announcements of timed portal vaults:
+force_more_message += interdimensional caravan
+force_more_message += distant snort
+force_more_message += roar of battle
+force_more_message += wave of frost
+force_more_message += hiss of flowing sand
+force_more_message += sound of rushing water
+force_more_message += oppressive heat about you
+force_more_message += crackle of arcane power
+force_more_message += hear a distant wind
+## Dangerous weapons
+#force_more_message += is wielding.*distortion
+## dancing weapons require special handling...
+#force_more_message += there is a.*distortion
+#force_more_message += of distortion comes into view
+
+# tiles-specific options
+tile_show_threat_levels = tough, nasty
+cloud_status = true
+
+# does this have a bad interaction with view_delay ???
+# tile_realtime_anim = true
+
+# player tile things
+tile_weapon_offsets = 0,0
+tile_shield_offsets = 0,0
+
+# TODO: move all of these global player tiles into the species-specific tables,
+# then get rid of this old table
+: player_tiles_table = {
+: "tile:mons_polymoth",
+: "tile:mons_dimme",
+: "tile:mons_hell_wizard_50",
+: "tile:mons_hellbinder",
+: "tile:mons_master_elementalist",
+: "tile:mons_dryad",
+: "tile:mons_eleionoma",
+:-- "tile:mons_tiamat_mottled",
+: "tile:mons_holy_swine", }
+:
+: if c_persist.PLAYER_TILE == nil then
+:    c_persist.PLAYER_TILE = player_tiles_table[crawl.random2(#player_tiles_table) + 1]
+: end
+:
+: crawl.setopt("tile_player_tile = " .. c_persist.PLAYER_TILE)
+
+# Below we setup some custom player tile Lua, based on species
+#
+: barachian_tiles = {
+: "tile:mons_prince_ribbit", }
+
+: deep_dwarf_tiles = {
+: "tile:mons_wiglaf",
+: "tile:mons_jorgrun", }
+
+: deep_elf_tiles = {
+: "tile:mons_deep_elf_high_priest",
+: "tile:mons_deep_elf_demonologist",
+: "tile:mons_deep_elf_annihilator", }
+
+: demigod_tiles = {
+: "tile:mons_orb_of_electricity",
+: "tile:mons_mlioglotl", }
+
+: demonspawn_tiles = {
+: "tile:mons_killer_klown_3",
+: "tile:mons_gloorx_vloq",
+: "tile:mons_lom_lobon",
+: "tile:mons_executioner", }
+
+: djinni_tiles = {
+: "tile:mons_azrael", }
+
+: draconian_tiles = {
+: "tile:mons_lernaean_hydra01",
+: "tile:TRAN_DRAGON_WHITE",
+: "tile:mons_xtahua",
+: "tile:mons_serpent_of_hell_gehenna",
+: "tile:mons_serpent_of_hell_tartarus", }
+
+: felid_tiles = {
+: "tile:mons_natasha", }
+
+: formicid_tiles = {
+: "tile:mons_pharaoh_ant", }
+
+: gargoyle_tiles = {
+: "tile:mons_training_dummy",
+: "tile:mons_war_gargoyle", }
+
+: ghoul_tiles = {
+: "tile:mons_zombie_lernaean_hydra01",
+: "tile:mons_ghoul", }
+
+: gnoll_tiles = {
+: "tile:mons_gnoll",
+: "tile:mons_gnoll_sergeant",
+: "tile:mons_crazy_yiuf",
+: "tile:mons_grum",
+: "tile:mons_grunn",
+: "tile:mons_gnoll_bouda", }
+
+: hill_orc_tiles = {
+: "tile:mons_orc_warlord", }
+
+: human_tiles = {
+: "tile:mons_ancestor_hexer",
+: "tile:mons_drowned_soul",
+: "tile:mons_erica_swordless",
+: "tile:mons_louise",
+: "tile:mons_maggie",
+: "tile:mons_margery", }
+
+: kobold_tiles = {
+: "tile:tran_shadow",
+: "tile:mons_sonja", }
+
+: merfolk_tiles = {
+: "tile:mons_water_nymph",
+: "tile:mons_merfolk_aquamancer",
+: "tile:mons_ilsuiw_water", }
+
+: minotaur_tiles = {
+: "tile:mons_minotaur",
+: "tile:mons_chuck", }
+
+: mummy_tiles = {
+: "tile:mons_anubis_guard",
+: "tile:mons_khufu",
+: "tile:mons_menkaure",
+: "tile:mons_royal_mummy", }
+
+: naga_tiles = {
+: "tile:mons_vashnia", }
+
+: octopode_tiles = {
+:-- "tile:mons_cigotuvis_monster",
+:-- "tile:TRAN_STORM_OCTOPODE",
+: "normal", }
+
+: ogre_tiles = {
+: "tile:mons_ogre_mage",
+: "tile:mons_erolcha",
+: "tile:mons_ironbound_thunderhulk", }
+
+: palentonga_tiles = {
+: "tile:TRAN_STATUE_PALENTONGA", }
+
+: spriggan_tiles = {
+: "tile:mons_spriggan_air_mage",
+: "tile:mons_the_enchantress",
+: "tile:mons_agnes_staveless", }
+
+: tengu_tiles = {
+: "tile:mons_phase_bat",
+: "tile:mons_bennu",
+: "tile:mons_caustic_shrike",
+: "tile:mons_tengu_conjurer",
+: "tile:mons_tengu_reaver", }
+
+: troll_tiles = {
+: "tile:mons_deep_troll_shaman",
+: "tile:mons_parghit",
+: "tile:mons_moon_troll", }
+
+: vampire_tiles = {
+: "tile:mons_zonguldrok_lich",
+: "tile:mons_murray",
+: "tile:mons_jory",
+: "tile:mons_jiangshi", }
+
+: vine_stalker_tiles = {
+: "tile:mons_vine_stalker",
+: "tile:mons_briar_patch",
+: "tile:mons_thorn_hunter", }
+
+: species_name_map = {
+: {"Barachi", barachian_tiles},
+: {"Deep Dwarf", deep_dwarf_tiles},
+: {"Deep Elf", deep_elf_tiles},
+: {"Demigod", demigod_tiles},
+: {"Demonspawn", demonspawn_tiles},
+: {"Djinni", djinni_tiles},
+: {"Draconian", draconian_tiles},
+: {"Felid", felid_tiles},
+: {"Formicid", formicid_tiles},
+: {"Gargoyle", gargoyle_tiles},
+: {"Ghoul", ghoul_tiles},
+: {"Gnoll", gnoll_tiles},
+: {"Hill Orc", hill_orc_tiles},
+: {"Human", human_tiles},
+: {"Kobold", kobold_tiles},
+: {"Merfolk", merfolk_tiles},
+: {"Minotaur", minotaur_tiles},
+: {"Mummy", mummy_tiles},
+: {"Naga", naga_tiles},
+: {"Octopode", octopode_tiles},
+: {"Ogre", ogre_tiles},
+: {"Palentonga", palentonga_tiles},
+: {"Spriggan", spriggan_tiles},
+: {"Tengu", tengu_tiles},
+: {"Troll", troll_tiles},
+: {"Vampire", vampire_tiles},
+: {"Vine Stalker", vine_stalker_tiles}, }
+
+# crawlrc Lua declared in brackets is processed after the game is initialized
 {
+-- here we randomize the player's tile per-species, using you.race()
+-- you.race() returns the capitalized name string from the species yaml
+function get_species_tile()
+    local species = you.race()
+    local tile = "normal"
+
+    for _,map in ipairs(species_name_map) do
+        if species == map[1] then
+            tile = map[2][crawl.random2(#map[2]) + 1]
+        end
+    end
+    return tile
+end
+
+function init_player_tile()
+    c_persist.PLAYER_TILE = get_species_tile()
+    crawl.setopt("tile_player_tile = " .. c_persist.PLAYER_TILE)
+end
+
+-- begin threat warning lua
 function check(mons, ability_string)
     local books = nil
     books = mons:spells()
@@ -198,6 +472,32 @@ local status = {
     end, }
 
 function ready()
+    if you.turns() == 0 then init_player_tile() end
     status:update()
+end
+
+-- here we use the c_message hook to dynamically toggle travel_open_doors,
+-- enabling the player to avoid doors while autoexploring,
+-- without having to manually open the resulting door interrupt spam
+-- TODO: try using ch_stop_running instead, to reduce player keypresses
+--       needed for this to work?
+function c_message(text, channel)
+    if string.find(text, "unopened door") then
+        crawl.setopt("travel_open_doors = open")
+    else
+        crawl.setopt("travel_open_doors = avoid")
+    end
+end
+
+--function ch_start_running(runmode)
+--    crawl.setopt("travel_open_doors = avoid")
+--end
+
+-- skip chain lightning and shatter ally prompts when megazigging with death channel
+function c_answer_prompt(prompt)
+    if you.branch() == "Zig" and you.status("death channelling") == true then
+        if prompt:find("Chain Lightning might hit") then return true end
+        if prompt:find("Really attack near") then return true end
+    end
 end
 }
