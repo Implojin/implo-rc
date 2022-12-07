@@ -2,7 +2,6 @@
 function check(mons, ability_string)
     local books = nil
     books = mons:spells()
-
     if books ~= nil then
         for _,book in ipairs(books) do
             for _,spell in ipairs(book) do
@@ -10,7 +9,6 @@ function check(mons, ability_string)
             end
         end
     end
-
     return false
 end
 
@@ -31,12 +29,14 @@ end
 
 local ATT_NEUTRAL = 1
 local mons_table = {}
-local threat_table = {}
+local current_threats = {}
+local known_threats = {}
 
 local DEBUG_MONS_STATUS = false
 local DEBUG_MONS_DESC = false
 local DEBUG_MONS_TARGET_DESC = false
 local DEBUG_LOF_PATH = false
+local DEBUG_THREATS = false
 
 local function all_true(table)
     for _,v in ipairs(table) do
@@ -76,6 +76,15 @@ function check_lof(mons, spell)
     return true
 end
 
+function debug_mpr_current_threats()
+    crawl.mpr("current_threats : ")
+    for _,entry in ipairs(current_threats) do
+        local pos = {}
+        pos1,pos2 = entry[1]:pos()
+        crawl.mpr("name(): " .. entry[1]:name() .. " pos(): " .. pos1 .. "," .. pos2)
+    end
+end
+
 local status = {
     _update_mons = function()
         local LOS = you.los()
@@ -90,6 +99,13 @@ local status = {
                 end
             end
         end
+    end,
+    -- TODO: Maybe allow some extreme threats to pop every turn? e.g. paralyse with low Will
+    _warn = function ()
+        local threat = current_threats[#current_threats]
+        crawl.formatted_mpr("<lightred>Danger: " .. threat[1]:name() .. "</lightred> || " ..
+                            "<lightblue>Reason: " .. tostring(threat[2]) .. "</lightblue>")
+        crawl.more()
     end,
     _check_threat = function(self,mons)
         -- when in debug mode, print the monster status table to mpr
@@ -133,7 +149,6 @@ local status = {
         {conditions = {check_desc(mons, "poison and cause paralysis or slowing"), you.res_poison() < 1},
              reason = "AF_POISON_PARALYSE and no rPois"} ,
         -- TODO: Improve this? I'm not sure a static will check is ideal here; does monster HD/XL/whatever factor in?
-        -- TODO: Add hysteresis to the warnings: For wands especially, forcing more every turn is obnoxious.
         {conditions = {check_tdesc(mons, "wand of paralysis"), you.willpower() < 3},
              reason = "Wand of Paralysis and low Will"} ,
         -- comparing "distort" instead of "distortion" works against Rift, randarts, and panlord "distorting touch"
@@ -150,30 +165,36 @@ local status = {
 
         for _,threat in ipairs(danger_table) do
             if all_true(threat.conditions) then
-                table.insert(threat_table, {mons, threat.reason})
+                local needs_warn = true
+                -- if this entry to current_threats matches a known_threats entry, don't warn about it,
+                -- but also delete the matching known_threats entry, so that we can properly warn about duplicate threats.
+                for key,entry in pairs(known_threats) do
+                    if entry[1]:name() == mons:name() and entry[2] == threat.reason then
+                        needs_warn = false
+                        table.remove(known_threats, key)
+                        break
+                    end
+                end
+
+                table.insert(current_threats, {mons, threat.reason})
+                if needs_warn then self:_warn() end
             end
         end
 -- end danger table
     end,
     _update_threats = function(self)
-        threat_table = {}
+        current_threats = {}
         for _,mons in ipairs(mons_table) do
             self:_check_threat(mons)
         end
-    end,
-    -- TODO: hysteresis on the warnings, so they don't pop every turn
-    -- (maybe allow some extreme threats to pop every turn? e.g. paralyse with low Will)
-    _warn = function ()
-        for _,threat in ipairs(threat_table) do
-            crawl.formatted_mpr("<lightred>Danger: " .. threat[1]:name() .. "</lightred> || " ..
-                                "<lightblue>Reason: " .. tostring(threat[2]) .. "</lightblue>")
-            crawl.more()
-        end
+        if DEBUG_THREATS == true then debug_mpr_current_threats() end
+
+        -- at the end of each update, replace the known_threats table with the current_threats table
+        known_threats = current_threats
     end,
     update = function(self)
         self:_update_mons()
         self:_update_threats()
-        self:_warn()
     end, }
 
 function ready()
