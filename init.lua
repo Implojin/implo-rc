@@ -435,7 +435,9 @@ local status = {
         {conditions = {check(mons, "Malmutate"), check_lof(mons), you.branch() ~= "Zig"},
              reason = "Malmutator in LOF!"} ,
         {conditions = {mons:name() == "orb of fire", you.res_fire() < 3},
-             reason = "Orb of Fire and low rF"} , }
+             reason = "Orb of Fire and low rF"} ,
+        {conditions = {mons:is_unique() == true},
+             reason = "Unique monster, careful!"} , }
 
         for _,threat in ipairs(danger_table) do
             if all_true(threat.conditions) then
