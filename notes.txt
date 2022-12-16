@@ -39,3 +39,142 @@ crawl emits some memory hexadecimal (probably the hex of the userdata mons subta
 
 -----
 
+monster entries ordinarily lack any kind of gid, making it difficult to later identify if we've already issued a warning
+for a particular monster when there are multiple of its kind in view.
+
+
+-----
+----> can I store / compare against each given tostring(mons), for purposes of using the memory hex as a semi-unique identifier
+--for each mons instance?
+
+--This seems like it ?might? work? Depending if the memory address in question is the pointer to the initial mons,
+--or just the pointer to the later table offset?
+
+--If I write this right I could, maybe, get this to work???
+^^^ none of these memory address comparisons work.
+get_monster_at() returns a new, unique object every time it's called, which has a new memory address.
+
+this approach could maybe work if i tried to access memory locations in a different way, somehow, but not like this.
+
+for now, i'm moving on to trying to compare against mons:pos(), which seems promising?
+
+--------
+
+question: what happens when you try to pull monster.info:pos() from a stored mons table entry that now references a deceased mons?
+
+i'm thinking here about using mons:pos() as an effective-gid, since testing shows that stored mons_table entries contain
+actively-updated position information, and position information is mostly-unique
+(actors in dcss mostly cannot stack, fedhas plants aside)
+
+but the question then becomes: what happens to stored mons_table entries from previous turns, that reference now-dead mons?
+will they return the last known information for the mons?
+or will they return nil?
+or something else entirely?
+
+i'm really hoping they don't return last known position because that would lead to a bunch of dead mons:pos() entries like
+{1,0}, pointing at the spot where the character has been melee attacking.
+
+TODO: test this?
+
+---------
+
+alternate design, since the above won't work:
+
+each turn, build a stack of current_threat s as usual.
+
+for every (previously) known_threat on the stack, you simultaneously pop a matching threat from the known_threat stack,
+and pop its match from the current_threat stack, and insert the match into the new_threat stack.
+
+if you run out of current_threat s, discard the remainder of the known_threat stack.
+
+if you run out of known_threats,
+
+any remaining threats in the current_threat stack at this point get added to the new_threat stack,
+and here is where you issue warnings for every threat being added.
+
+after this is completed, the new_threat stack becomes the known_threat stack.
+
+-----
+
+this should work, right?
+
+do i need 3 stacks? can i do it with two?
+
+( just do your sorting and warning while building the current_threat stack ? )
+
+
+So the way I'm doing this is building a stack of current threats each turn, and comparing that stack
+to a stack of known threats. Each current threat that didn't have a matching known threat pops a warning:
+this allows us to, for example, pop repeated warnings for things like floating eye paralysis gaze channelling,
+or to pop simultaneous warnings for multiple monsters with the same name / threat profile.
+
+--------
+
+-- problem set:
+-- when explore_greedy is used with travel_open_doors = avoid ,
+-- autoexplore stops adjacent to feature "closed_door", *without* printing any message to the log.
+-- only when the player tries pressing 'o' again, *after* this stop-with-no-context, will the game print an "unopened door" message.
+
+-- I want my script to automatically handle re-issuing explore_greedy,
+-- after the initial (no context) stop.
+
+-- questions:
+-- Can I re-issue a command from within ch_stop_running?
+-- Technically, I think this hook is called while the rundelay is still active -- 
+-- you can see in travel.cc runrest::stop that this hook is called before stop_delay() ?
+-- I suppose the quickest way to figure this out is to test re-issuing a command from within the ch_stop_running hook.
+
+-------
+
+-- Note: I don't think that I should be issuing actions from within ch_stop_running(),
+-- because this is the wrong place to issue generic actions,
+-- and I really only want to have one unified "action handler",
+-- not a bunch of piecemeal scattered checks that make it impossible to analyze the codeflow / decision tree
+-- conceptually, it's okay-ish to set a flag here, *if this is the only place the flag can be set*,
+-- but any action that needs to be taken based on the flag should happen from the action handler.
+
+--------
+
+-- Note: we can't do anything re: unopened door explore within c_message(), because travel_open_doors = avoid
+-- *stops without doing anything*; only the next turn's attempt to explore generates a message.
+-- I think we can't issue commands here either, because this hook can be called when it's not the player's turn?
+
+--------
+
+    -- so, apparently the c_message() hook is pre-empted if I print a message with crawl.mpr() from within ch_stop_running....
+    -- (we can't issue messages from ch_stop_running without breaking our other message search hooks?)
+    -- need to limit ch_stop_running() functionality to setting script-internal flags only, I guess?
+
+--------
+
+-- my understanding is that the c_message hook is called when a message is sent:
+-- at minimum, i think you can't expect the player will be able to issue commands here?
+-- this hook is likely to be called in the middle of a monster turn / other delay?
+-- TODO: look into when this hook is called
+
+--------
+
+# XXX: Here we bind a no-op for use by send_no_cmd() .
+# The script sometimes needs to issue a null command to move to the next ready() cycle.
+# We repurpose the [O]pen doors key for this, as it's mostly unused in normal play.
+bindkey = [O] CMD_NO_CMD_DEFAULT
+:function send_no_cmd()
+:    crawl.sendkeys("O")
+:end
+
+-------
+
+-- state tracker for the previously-sent command, for script control purposes
+local previous_command = nil
+function issue_key(key)
+    previous_command = key
+    crawl.sendkeys(key)
+end
+
+-------
+
+
+
+
+
+

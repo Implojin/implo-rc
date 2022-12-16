@@ -383,6 +383,36 @@ function check_rare_ood(m)
     return mdepth > you_depth + ood_threshold and mprob < 2
 end
 
+-- XXX: The logic that sets state for this below is necessarily ill-defined:
+-- Crawl doesn't send any kind of message when it stops autoexplore adjacent to a closed door.
+-- As a result, we have to guard against infinite loops here.
+local reissue_autoexplore_needed = false
+local loop_guard = 0
+local done_exploring = false
+function maybe_reissue_autoexplore()
+    assert(loop_guard < 100, "ASSERT: maybe_reissue_autoexplore() infinite loop detected")
+    crawl.setopt("travel_open_doors = avoid")
+
+    if next(mons_table) ~= nil then
+        reissue_autoexplore_needed = false
+    end
+
+    if done_exploring then
+        reissue_autoexplore_needed = false
+        done_exploring = false
+    end
+
+    if reissue_autoexplore_needed == true then
+        loop_guard = loop_guard + 1
+        crawl.mpr("|| travel_open_doors interrupted explore, reissuing autoexplore.")
+        crawl.setopt("travel_open_doors = open")
+        crawl.sendkeys('o')
+        return true
+    end
+    loop_guard = 0
+    return false
+end
+
 local status = {
     _update_mons = function()
         local LOS = you.los()
@@ -509,6 +539,7 @@ local status = {
              reason = "Seracfall and not rC+++, careful!"} ,
         {conditions = {check(mons, "Doom Howl"), mons:is("ready_to_howl"), you.branch() ~= "Zig"},
              reason = "Doom Howl in LOS, hex it or something"} , }
+-- end danger table
 
         for _,threat in ipairs(danger_table) do
             if all_true(threat.conditions) then
@@ -527,7 +558,7 @@ local status = {
                 if needs_warn then self:_warn() end
             end
         end
--- end danger table
+
     end,
     _update_threats = function(self)
         current_threats = {}
@@ -539,9 +570,27 @@ local status = {
         -- at the end of each update, replace the known_threats table with the current_threats table
         known_threats = current_threats
     end,
+    _maybe_act = function(self)
+-- begin action table
+        local action_table = {
+        { auto = true, handler = maybe_reissue_autoexplore } , }
+-- end action table
+
+        local did_act = nil
+        for _,action in ipairs(action_table) do
+            if action.auto then
+                did_act = action.handler()
+            end
+            if did_act == true then
+                break
+            end
+        end
+        return did_act
+    end,
     update = function(self)
         self:_update_mons()
         self:_update_threats()
+        self:_maybe_act()
     end, }
 
 function ready()
@@ -549,22 +598,48 @@ function ready()
     status:update()
 end
 
--- here we use the c_message hook to dynamically toggle travel_open_doors,
--- enabling the player to avoid doors while autoexploring,
--- without having to manually open the resulting door interrupt spam
--- TODO: try using ch_stop_running instead, to reduce player keypresses
---       needed for this to work?
+-- ch_stop_running preempts(?) c_message, so here we track state, and defer acting on it until the next ready().
+-- TODO: check messages for whether the player was shafted / teleported, and if so, stop reissuing autoexplore?
+-- I don't want the script blindly re-issuing actions if the floor situation has changed.
 function c_message(text, channel)
-    if string.find(text, "unopened door") then
-        crawl.setopt("travel_open_doors = open")
-    else
-        crawl.setopt("travel_open_doors = avoid")
+    if string.find(text, "Done exploring.") then
+        done_exploring = true
     end
 end
 
---function ch_start_running(runmode)
---    crawl.setopt("travel_open_doors = avoid")
---end
+-- view.feature_at(x,y) returns the second name string in feature-data.h, feature_def feat_defs[] ,
+-- this is the "vaultname" string that includes underscores
+function check_adjacent_feat(string)
+    local feature = nil
+    for i = -1,1 do
+        for j = -1,1 do
+            feature = view.feature_at(i,j)
+            if feature == string then return true end
+        end
+    end
+    return false
+end
+
+-- Note: We can't print messages to mpr from ch_stop_running().
+-- XXX: Messages here appear to print to the log *before* the c_message() hook is called, which appears
+-- to preempt that hook, breaking the underlying assumption that it's being called for each message. (???)
+function ch_stop_running(runmode)
+    reissue_autoexplore_needed = false
+    -- These conditions test if our autoexplore was interrupted early due to travel_open_doors = avoid.
+    -- XXX: This check is imperfect, and is likely to send the script into infinite autoexplore loops.
+    -- I've added an assert and some harder checks to maybe_reissue_autoexplore(), but this could still be improved.
+    if runmode == "explore_greedy" and check_adjacent_feat("closed_door") and you.feel_safe() then
+        reissue_autoexplore_needed = true
+    end
+end
+
+-- "travel_open_doors = avoid" ordinarily causes problems with closed doors and interlevel travel.
+-- This permits autotravel to open doors that are in the way, when issuing G> and X> commands.
+function ch_start_running(runmode)
+    if runmode == "intertravel" then
+        crawl.setopt("travel_open_doors = open")
+    end
+end
 
 -- skip chain lightning and shatter ally prompts when megazigging with death channel
 function c_answer_prompt(prompt)
