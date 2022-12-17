@@ -383,6 +383,42 @@ function check_rare_ood(m)
     return mdepth > you_depth + ood_threshold and mprob < 2
 end
 
+-- The conditions here check for torment immunity, not torment resistance.
+-- This function is named and patterned after player::res_torment(), such that I could theoretically
+-- straight up delete this and replace its check with you.res_torment(), if that's ever added.
+function you_res_torment()
+    -- (you.get_mutation_level(MUT_TORMENT_RESISTANCE) >= 2)
+    if you.get_base_mutation_level("torment resistance") >= 2 then
+        return true
+    end
+    -- get_form()->res_neg() == 3
+    -- this appears to be MR_RES_NEG, 3 in form-data.h
+    -- notably, this excludes statue form, as that only provides MR_RES_NEG 1
+    local transform = you.transform()
+    if transform == "lich" or transform == "wisp" or transform == "fungus" or transform == "shadow" then
+        return true
+    end
+    -- || you.has_mutation(MUT_VAMPIRISM) && !you.vampire_alive
+    if you.get_base_mutation_level("vampiric") > 0 and you.status("bloodless") == true then
+        return true
+    end
+    -- || you.petrified()
+    -- player::petrified() returns duration[DUR_PETRIFIED]
+    -- this check would appear to be pointless for our purposes, as our script won't be getting turns while petrified,
+    -- but we include it here anyway, for completeness
+    if you.status("petrified") then
+        return true
+    end
+    -- || you.form == transformation::tree
+    if transform == "tree" then
+        return true
+    end
+    -- we do not recreate logic for player_equip_unrand(UNRAND_ETERNAL_TORMENT) here, as it has not generated since 2015
+
+    -- TODO: add partial torment resistance checks, maybe?
+    return false
+end
+
 -- XXX: The logic that sets state for this below is necessarily ill-defined:
 -- Crawl doesn't send any kind of message when it stops autoexplore adjacent to a closed door.
 -- As a result, we have to guard against infinite loops here.
@@ -538,7 +574,10 @@ local status = {
         {conditions = {check(mons, "Seracfall"), you.res_cold() < 3},
              reason = "Seracfall and not rC+++, careful!"} ,
         {conditions = {check(mons, "Doom Howl"), mons:is("ready_to_howl"), you.branch() ~= "Zig"},
-             reason = "Doom Howl in LOS, hex it or something"} , }
+             reason = "Doom Howl in LOS, hex it or something"} ,
+        {conditions = {check(mons, "Symbol of Torment"), you_res_torment() ~= true},
+             reason = "Torment and not torment immune!"} , }
+        -- TODO: write a dispel undead check for unholy species
 -- end danger table
 
         for _,threat in ipairs(danger_table) do

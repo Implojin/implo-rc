@@ -173,8 +173,16 @@ end
 
 -------
 
+    -- if TAG_MAJOR_VERSION == 34 || player_equip_unrand(UNRAND_ETERNAL_TORMENT)
+    local item = nil
+    item = items.equipped_at("Helmet")
+    if item ~= nil and item.name():find("Eternal Torment") then
+        return true
+    end
 
+-------
 
+    -- we do not recreate logic for player_equip_unrand(UNRAND_ETERNAL_TORMENT) here, as it has not generated since 2015
 
 
 
