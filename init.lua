@@ -601,7 +601,10 @@ local status = {
         {conditions = {check(mons, "Dispel Undead Range"), you_are_undead() == true},
              reason = "Dispel Undead in LOS while undead!"} ,
         {conditions = {check_tdesc(mons, "Undeadhunter"), you_are_undead() == true},
-             reason = "wielding Undeadhunter while undead, watch out!!"} , }
+             reason = "wielding Undeadhunter while undead, watch out!!"} ,
+        -- xtahua (3d40)
+        {conditions = {check(mons, "Searing Breath"), you.res_fire() < 3},
+             reason = "Searing Breath and not rF+++, watch out!"} , }
 -- end danger table
 
         for _,threat in ipairs(danger_table) do
