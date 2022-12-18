@@ -604,7 +604,15 @@ local status = {
              reason = "wielding Undeadhunter while undead, watch out!!"} ,
         -- xtahua (3d40)
         {conditions = {check(mons, "Searing Breath"), you.res_fire() < 3},
-             reason = "Searing Breath and not rF+++, watch out!"} , }
+             reason = "Searing Breath (3d40) and not rF+++, watch out!"} ,
+        -- hellephant (3d40), fire dragon (3d24), lindwurm (3d18), hell hound (3d10)
+        -- for hellephants we really want rF3, for everything else we can probably get away with rF1
+        -- TODO: maybe dynamically check ability descriptors for something like '3d40', 
+        -- to get rid of the hardcoded hellephant check here?
+        {conditions = {check(mons, "Fire Breath"), mons:name() ~= "hellephant", you.res_fire() < 1},
+             reason = "Fire Breath and not rF+, careful"} ,
+        {conditions = {check(mons, "Fire Breath"), mons:name() == "hellephant", you.res_fire() < 3},
+             reason = "Fire Breath (3d40) and not rF+++, watch out!"} , }
 -- end danger table
 
         for _,threat in ipairs(danger_table) do
