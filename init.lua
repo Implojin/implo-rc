@@ -419,6 +419,27 @@ function you_res_torment()
     return false
 end
 
+-- This function is patterned after player::undead_state(), for purpose of checking Dispel Undead vulnerability.
+-- As found in bolt::affect_player_enchantment , all undead states not (you.undead_state() == US_ALIVE) are vulnerable to DU.
+function you_are_undead()
+    -- if (form == transformation::lich)
+    local transform = you.transform()
+    if transform == "lich" then return true end
+    -- return species::undead_type(species);
+    -- it looks like this ultimately returns the undead_type in the species yamls, after a few indirect calls
+    -- ghoul and mummy are US_UNDEAD, vampire is US_SEMI_UNDEAD, grep "undead_type" didn't find any others here.
+    local species = you.race()
+    if species == "Ghoul" or species == "Mummy" then
+        return true
+    end
+    -- Here we deviate from player::undead_state() : DU Range and Undeadhunter check holiness, which exempts Alive Vp.
+    -- As far as I can tell, mons have no way of casting DU at Alive Vp, even though they would technically take damage from it.
+    if species == "Vampire" and string.find(you.mutation_overview(), "alive") == nil then
+        return true
+    end
+    return false
+end
+
 -- XXX: The logic that sets state for this below is necessarily ill-defined:
 -- Crawl doesn't send any kind of message when it stops autoexplore adjacent to a closed door.
 -- As a result, we have to guard against infinite loops here.
@@ -576,8 +597,9 @@ local status = {
         {conditions = {check(mons, "Doom Howl"), mons:is("ready_to_howl"), you.branch() ~= "Zig"},
              reason = "Doom Howl in LOS, hex it or something"} ,
         {conditions = {check(mons, "Symbol of Torment"), you_res_torment() ~= true},
-             reason = "Torment and not torment immune!"} , }
-        -- TODO: write a dispel undead check for unholy species
+             reason = "Torment and not torment immune!"} ,
+        {conditions = {check(mons, "Dispel Undead Range"), you_are_undead() == true},
+             reason = "Dispel Undead in LOS while undead!"} , }
 -- end danger table
 
         for _,threat in ipairs(danger_table) do

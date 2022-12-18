@@ -184,5 +184,12 @@ end
 
     -- we do not recreate logic for player_equip_unrand(UNRAND_ETERNAL_TORMENT) here, as it has not generated since 2015
 
+-------
 
+    -- Note: Monsters do not target Alive player Vp with DU Range, even though the player *would* take damage from this.
+    -- Its targeter in mon-cast.cc, case SPELL_DISPEL_UNDEAD_RANGE:, checks (foe->holiness() & MH_UNDEAD), which exempts Alive Vp.
+    -- We return false for Alive Vp here because they are not in danger from DU in practice, at present.
+    -- Undeadhunter uses the same holiness check exempting living Vp, so writing it like this seems to be okay in practice?
+
+-------
 
