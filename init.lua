@@ -599,7 +599,9 @@ local status = {
         {conditions = {check(mons, "Symbol of Torment"), you_res_torment() ~= true},
              reason = "Torment and not torment immune!"} ,
         {conditions = {check(mons, "Dispel Undead Range"), you_are_undead() == true},
-             reason = "Dispel Undead in LOS while undead!"} , }
+             reason = "Dispel Undead in LOS while undead!"} ,
+        {conditions = {check_tdesc(mons, "Undeadhunter"), you_are_undead() == true},
+             reason = "wielding Undeadhunter while undead, watch out!!"} , }
 -- end danger table
 
         for _,threat in ipairs(danger_table) do
