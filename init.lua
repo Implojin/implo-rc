@@ -273,13 +273,42 @@ function init_player_tile()
 end
 
 -- begin threat warning lua
-function check(mons, ability_string)
+local DEBUG_MONS_STATUS = false
+local DEBUG_MONS_FLAGS = false
+local DEBUG_MONS_DESC = false
+local DEBUG_MONS_TARGET_DESC = false
+local DEBUG_LOF_PATH = false
+local DEBUG_THREATS = false
+local DEBUG_ABIL_XDY = false
+local DEBUG_ABIL_DAM = false
+local DEBUG_ABIL_PCT = false
+
+local ATT_NEUTRAL = 1
+local mons_table = {}
+local current_threats = {}
+local known_threats = {}
+
+-- Check if an ability exists within the monster's spellbook.
+-- This checks innate/demonic abilities and spells, but cannot check draconian breath abilities.
+-- The third parameter is optional, and tests if the ability deals more than the given damage.
+-- @param mons mons
+-- @param string ability name
+-- @param number[opt="nil"] damage optional
+-- @return bool
+function check(mons, ability_string, damage)
+    damage = damage or nil
     local books = nil
     books = mons:spells()
     if books ~= nil then
         for _,book in ipairs(books) do
             for _,spell in ipairs(book) do
-                if spell == ability_string then return true end
+                if spell == ability_string then
+                    if damage ~= nil then
+                        return check_abil_dam(mons, ability_string) > damage
+                    else
+                        return true
+                    end
+                end
             end
         end
     end
@@ -301,17 +330,150 @@ function check_tdesc(mons, string)
     return false
 end
 
-local ATT_NEUTRAL = 1
-local mons_table = {}
-local current_threats = {}
-local known_threats = {}
+-- Check if a monster description contains a damage string for a given ability.
+-- Returns the damage string if it exists, otherwise nil.
+-- The damage string is typically formatted as "#d#" (ex: 3d23), but is sometimes formatted as "#-#" (Smiting: 7-17),
+-- prefixed with "#x" (CBL: 3x3d25), or postfixed with "*" (LRD: 3d23*).
+-- @param mons mons
+-- @param string ability name
+-- @return string|nil xdy
+function check_abil_xdy(mons, ability)
+    local xdy = nil
+    local desc = mons:desc(true)
+    -- manually fixup ability names that get mangled/chopped by crawl in the mons:desc window
+    if ability == "Lehudib's Crystal Spear" then ability = "Crystal Spear" end
+    if ability == "Lee's Rapid Deconstruction" then ability = "Lee's Rapid Deconst" end
 
-local DEBUG_MONS_STATUS = false
-local DEBUG_MONS_FLAGS = false
-local DEBUG_MONS_DESC = false
-local DEBUG_MONS_TARGET_DESC = false
-local DEBUG_LOF_PATH = false
-local DEBUG_THREATS = false
+    -- if the ability exists in the full desc,
+    if string.find(desc, ability) ~= nil then
+        -- try to extract "ability string, (optional) whitespace, (optional) <color>, ([ax]x[d-]y*)" from the full desc
+        xdy = string.match(desc, ability .. "%s*" .. "<?%l*>?" .. "%(?%d*x?%d+[d%-]%d+%*?%)?")
+        -- if our pattern exists, try to extract "xdy"
+        if xdy ~= nil then
+            xdy = string.match(xdy, "%d*x?%d+[d%-]%d+")
+            assert(xdy ~= nil)
+        end
+    end
+    if DEBUG_ABIL_XDY then
+        if xdy ~= nil then
+            crawl.mpr(ability .. " xdy: " .. xdy)
+        end
+    end
+    return xdy
+end
+
+-- Check how much damage a monster will deal with an ability.
+-- Returns the maximum possible damage of the ability if we can calculate it, otherwise nil.
+-- @param mons mons
+-- @param string ability name
+-- @return number|nil damage
+function check_abil_dam(mons, ability)
+    local xdy = check_abil_xdy(mons, ability)
+    if xdy == nil then return nil end
+    assert(type(xdy) == "string")
+
+    local damage = nil
+    local dice = {}
+
+    for i in string.gmatch(xdy, "%d+") do
+        table.insert(dice, tonumber(i))
+    end
+    assert(next(dice) ~= nil and #dice >= 2)
+
+    -- most damage formats: "3d23", "3x3d25", "3d23*"
+    if string.find(xdy, "d") ~= nil then
+        local roll = 1
+        for _,die in ipairs(dice) do
+            roll = roll * die
+        end
+        damage = roll
+    -- smiting damage format: "7-17"
+    elseif string.find(xdy, "%-") ~= nil and #dice == 2 then
+        damage = dice[#dice]
+    end
+    -- This assert should trigger for damage formats like "3x7-17", which are unhandled above as they do not currently exist
+    assert(damage ~= nil, "ability damage format unrecognized!")
+    if DEBUG_ABIL_DAM then crawl.mpr(ability .. " damage: " .. tostring(damage)) end
+    return damage
+end
+
+-- Check whether a monster's abilities deal enough damage to be dangerous to the player.
+-- If it's dangerous, return a danger_entries table, containing conditions and reasons for each danger.
+-- @return danger_entries { {conditions = table, reason = string}, ... }
+function check_generic_damage(mons)
+    local abilities = {}
+    local books = nil
+    books = mons:spells()
+    if books ~= nil then
+        for _,book in ipairs(books) do
+            for _,spell in ipairs(book) do
+                table.insert(abilities, spell)
+            end
+        end
+    end
+
+    local hp,mhp = you.hp()
+    local damage = nil
+    local entry = {}
+    local danger_entries = {}
+
+    if next(abilities) ~= nil then
+        for _,ability in ipairs(abilities) do
+            damage = nil
+            -- XXX: serpent of hell has an issue here: its abilities mostly dont show up in mons:spells() ???
+            -- all that shows up here are "gehenna serpent of hell breath" and "Summon Dragon"
+            -- It looks like those are its only two abilities in mon-spell.h MST_SERPENT_OF_HELL_GEH ,
+            -- but it has several other abils in-game (these are probably coded similarly to draconian breath abils or something?
+            -- TODO: look into *this*.
+            damage = check_abil_dam(mons, ability)
+            if damage ~= nil then
+                entry = {}
+                if damage / mhp >= 0.5 then
+                    entry = {conditions = {true}, reason = ability .. " deals more than 50% MHP!"}
+                    table.insert(danger_entries, entry)
+                end
+                if damage > hp then
+                    entry = {conditions = {true}, reason = "IMMINENT DEATH: " .. ability .. " deals " .. tostring(damage)
+                                                           .. " damage, you have " .. tostring(hp) .. " HP!!"}
+                    table.insert(danger_entries, entry)
+                end
+            end
+        end
+    end
+
+    -- TODO: warn if (total highest damage of all onscreen mons) >= (current HP)?
+    -- (this will require doing it from outside of this function)
+
+    for _,entry in ipairs(danger_entries) do
+        assert(type(entry.conditions ~= "table") and type(entry.reason ~= "string"))
+    end
+    return danger_entries
+end
+
+-- Check if a given monster ability has a (percentage) value listed in the monster description.
+-- Returns "percentage" as a string if it exists, otherwise nil.
+-- @param mons mons
+-- @param string ability name
+-- @return string|nil percentage
+function check_abil_pct(mons, ability)
+    local pct = nil
+    local desc = mons:desc(true)
+    -- if the ability exists in the full desc,
+    if string.find(desc, ability) ~= nil then
+        -- try to extract "ability string, whitespace, optional <color>, (number%)" from the full desc
+        pct = string.match(desc, ability .. "%s+" .. "<?%l*>?" .. "%(%d+%%%)")
+        -- if our pattern exists, try to extract "number%"
+        if pct ~= nil then
+            pct = string.match(pct, "%d+")
+        end
+    end
+    if DEBUG_ABIL_PCT then
+        if pct ~= nil then
+            crawl.mpr(ability .. "(%): " .. pct)
+        end
+    end
+    return pct
+end
 
 local function all_true(table)
     for _,v in ipairs(table) do
@@ -606,13 +768,35 @@ local status = {
         {conditions = {check(mons, "Searing Breath"), you.res_fire() < 3},
              reason = "Searing Breath (3d40) and not rF+++, watch out!"} ,
         -- hellephant (3d40), fire dragon (3d24), lindwurm (3d18), hell hound (3d10)
-        -- for hellephants we really want rF3, for everything else we can probably get away with rF1
-        -- TODO: maybe dynamically check ability descriptors for something like '3d40', 
+        -- TODO: maybe dynamically check ability descriptors for something like '3d40',
         -- to get rid of the hardcoded hellephant check here?
         {conditions = {check(mons, "Fire Breath"), mons:name() ~= "hellephant", you.res_fire() < 1},
              reason = "Fire Breath and not rF+, careful"} ,
         {conditions = {check(mons, "Fire Breath"), mons:name() == "hellephant", you.res_fire() < 3},
              reason = "Fire Breath (3d40) and not rF+++, watch out!"} , }
+
+        local generic_damage_entries = check_generic_damage(mons)
+        for _,entry in ipairs(generic_damage_entries) do
+            table.insert(danger_table, entry)
+        end
+
+        -- TODO: Is there any way I can auto-generate resist value needed vs. ability damage? (d10, d20, r+, d30 r++, d40 r+++)
+        -- TODO: split up warnings into 3 tiers, based on the above:
+        -- t1 -> low threat (d10,d20 / rX1 ele warnings), yellow warning text, no force more
+        -- t2 -> mid threat (d30 / rX2 ele warnings, ~banish?), red? warning text, force more
+        -- t3 -> max threat (d40+ rX3, paralyse), purple? warning text, force more, flash screen? (maybe y/n prompt to continue?)
+        -- TODO: handle bolt of fire
+        -- TODO: handle bolt of magma
+        -- TODO: handle call down damnation and hurl damnation
+        -- TODO: handle radroach irradiate
+        -- TODO: handle revenant ghostly fireball (rN check)
+        -- TODO: generic "mons carrying wand" check
+        -- TODO: generic "mons carrying randart/unrand check"
+        -- TODO: something like "warning: min TTL < 1 turn!!", "warning: min TTL < 2 turns!",
+        -- "avg TTL < 3 turns", etc.; compare against total known onscreen damage values for this
+        -- TODO: handle Spit Acid and no rCorr
+        -- TODO: look into which other rCorr abilities should be warned
+
 -- end danger table
 
         for _,threat in ipairs(danger_table) do
@@ -647,6 +831,9 @@ local status = {
     _maybe_act = function(self)
 -- begin action table
         local action_table = {
+        -- TODO: auto-id of consumables, to help avoid earlygame unid situations
+        -- TODO: make sure the script autopicks aux items during earlygame
+        -- TODO: let the script handle autopick / autodrop of the usual throwables + evo items
         { auto = true, handler = maybe_reissue_autoexplore } , }
 -- end action table
 
