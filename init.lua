@@ -773,7 +773,15 @@ local status = {
         {conditions = {check(mons, "Fire Breath"), mons:name() ~= "hellephant", you.res_fire() < 1},
              reason = "Fire Breath and not rF+, careful"} ,
         {conditions = {check(mons, "Fire Breath"), mons:name() == "hellephant", you.res_fire() < 3},
-             reason = "Fire Breath (3d40) and not rF+++, watch out!"} , }
+             reason = "Fire Breath (3d40) and not rF+++, watch out!"} ,
+        -- 10 mons: orb of fire (3d43), margery (3d33), draconian scorcher (3d26), fire giant (3d26),
+        -- deep elf elementalist (3d23), balrug (3d23), azrael (3d20), hell hog (3d20), wizard (3d19), efreet (3d15)
+        {conditions = {check(mons, "Fireball"), mons:name() ~= "orb of fire" and mons:name() ~= "Margery", you.res_fire() < 1},
+             reason = "Fireball and not rF+, careful"} ,
+        {conditions = {check(mons, "Fireball"), mons:name() == "Margery", you.res_fire() < 2},
+             reason = "Fireball (3d33) and not rF++, careful"} ,
+        {conditions = {check(mons, "Fireball"), mons:name() == "orb of fire", you.res_fire() < 3},
+             reason = "Fireball (3d43) and not rF+++, watch out!"} , }
 
         local generic_damage_entries = check_generic_damage(mons)
         for _,entry in ipairs(generic_damage_entries) do
