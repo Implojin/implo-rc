@@ -963,7 +963,7 @@ function check_adjacent_feat(string)
     for i = -1,1 do
         for j = -1,1 do
             feature = view.feature_at(i,j)
-            if feature == string then return true end
+            if feature == string and travel.is_excluded(i,j) == false then return true end
         end
     end
     return false
