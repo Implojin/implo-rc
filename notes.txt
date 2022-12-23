@@ -238,3 +238,13 @@ end
         -- I guess my gamesense that you don't need rF3 for roxanne is wrong because I never fight roxanne?
 
 -------
+
+        -- half done: split up warnings into 3 tiers, based on damage and resist type:
+        -- t1 -> low threat (d10,d20 / rX1 ele warnings), yellow warning text, no force more
+        -- t2 -> mid threat (d30 / rX2 ele warnings, ~banish?), red? warning text, force more
+        -- t3 -> max threat (d40+ rX3, paralyse), purple? warning text, force more, flash screen? (maybe y/n prompt to continue?)
+
+        -- I've broken the warnings up by tier, but I still need to implement resistance checks for the generic damage warnings
+
+-------
+

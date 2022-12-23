@@ -62,6 +62,10 @@ force_more_message += hear a distant wind
 #force_more_message += there is a.*distortion
 #force_more_message += of distortion comes into view
 
+# flash screen for our scripted danger tier warnings above tier 2
+flash_screen_message += T2
+flash_screen_message += T3
+
 # tiles-specific options
 tile_show_threat_levels = tough, nasty
 cloud_status = true
@@ -399,7 +403,7 @@ end
 
 -- Check whether a monster's abilities deal enough damage to be dangerous to the player.
 -- If it's dangerous, return a danger_entries table, containing conditions and reasons for each danger.
--- @return danger_entries { {conditions = table, reason = string}, ... }
+-- @return danger_entries { {conditions = table, tier = number, reason = string}, ... }
 function check_generic_damage(mons)
     local abilities = {}
     local books = nil
@@ -429,12 +433,12 @@ function check_generic_damage(mons)
             if damage ~= nil then
                 entry = {}
                 if damage / mhp >= 0.5 then
-                    entry = {conditions = {true}, reason = ability .. " deals more than 50% MHP!"}
+                    entry = {conditions = {true}, tier = 2, reason = ability .. " deals more than 50% MHP!"}
                     table.insert(danger_entries, entry)
                 end
                 if damage > hp then
-                    entry = {conditions = {true}, reason = "IMMINENT DEATH: " .. ability .. " deals " .. tostring(damage)
-                                                           .. " damage, you have " .. tostring(hp) .. " HP!!"}
+                    entry = {conditions = {true}, tier = 3, reason = "IMMINENT DEATH: " .. ability .. " deals " .. tostring(damage)
+                                                                     .. " damage, you have " .. tostring(hp) .. " HP!!"}
                     table.insert(danger_entries, entry)
                 end
             end
@@ -445,7 +449,7 @@ function check_generic_damage(mons)
     -- (this will require doing it from outside of this function)
 
     for _,entry in ipairs(danger_entries) do
-        assert(type(entry.conditions ~= "table") and type(entry.reason ~= "string"))
+        assert(type(entry.conditions ~= "table") and type(entry.tier ~= "number") and type(entry.reason ~= "string"))
     end
     return danger_entries
 end
@@ -650,9 +654,18 @@ local status = {
     -- TODO: Maybe allow some extreme threats to pop every turn? e.g. paralyse with low Will
     _warn = function ()
         local threat = current_threats[#current_threats]
-        crawl.formatted_mpr("<lightred>Danger: " .. threat[1]:name() .. "</lightred> || " ..
-                            "<lightblue>Reason: " .. tostring(threat[2]) .. "</lightblue>")
-        crawl.more()
+        local tier = threat.tier
+        local colour = "yellow"
+        if tier > 1 then colour = "yellow" end
+        if tier > 2 then colour = "magenta" end
+
+        crawl.formatted_mpr("<lightred>Danger: " .. threat[1]:name() .. "</lightred> |T" .. tostring(tier) .. "| " ..
+                            "<" .. colour .. ">Reason: " .. threat.reason .. "</" .. colour .. ">")
+
+        -- Tier 2+, flash screen. There is no clua binding to manually perform a flash screen.
+        -- Here, we have to rely on the rcfile flash_screen_message option, pattern matching our (custom) printed tier messages.
+
+        if tier >= 3 then crawl.more() end
     end,
     _check_threat = function(self,mons)
         -- when in debug mode, print the monster status table to mpr
@@ -675,129 +688,175 @@ local status = {
         -- against player Will for Paralyse/Banish/Petrify, etc.
         local danger_table = {
         {conditions = {check(mons, "Paralyse"), you.willpower() < 3},
+               tier = 3,
              reason = "Paralyse and low Will"} ,
         {conditions = {check(mons, "Petrify"), you.willpower() < 3},
+               tier = 3,
              reason = "Petrify and low Will"} ,
         {conditions = {check(mons, "Banishment"), you.willpower() < 3},
+               tier = 3,
              reason = "Banishment and low Will"} ,
         {conditions = {check(mons, "Stunning Burst"), you.res_shock() < 1},
+               tier = 3,
              reason = "Stunning Burst (paralyse) and no rElec"} ,
         -- TODO: I'd like to deduplicate this but atm it's not worth the code, revisit this after adding all threat conditions
         -- (if there are enough conditions that need dedup I can change all reasons to a function return and update the caller)
         {conditions = {check(mons, "Paralysis Gaze"), mons:status("fully charged") ~= true},
+               tier = 3,
              reason = "irresistable Paralysis Gaze in LOS, but not channelling yet"} ,
         {conditions = {check(mons, "Paralysis Gaze"), mons:status("fully charged") == true},
+               tier = 3,
              reason = "channelling irresistable Paralysis Gaze!"} ,
         {conditions = {check(mons, "Confusion Gaze"), you.willpower() < 3},
+               tier = 2,
              reason = "Confusion Gaze and low Will"} ,
         -- XXX: As far as I can tell, the only way to pull attack flavour (AF_WHATEVER) data is
         -- through string.find(mons:desc()), this doesn't appear to be exposed anywhere else in the clua
         -- TODO: check against the other attack flavour descriptors to see if there are more that should be handled here
         -- https://github.com/crawl/crawl/blob/master/crawl-ref/source/describe.cc#L4292
         {conditions = {check_desc(mons, "poison and cause paralysis or slowing"), you.res_poison() < 1},
+               tier = 3,
              reason = "AF_POISON_PARALYSE and no rPois"} ,
         -- TODO: Improve this? I'm not sure a static will check is ideal here; does monster HD/XL/whatever factor in?
         {conditions = {check_tdesc(mons, "wand of paralysis"), you.willpower() < 3},
+               tier = 3,
              reason = "Wand of Paralysis and low Will"} ,
         -- comparing "distort" instead of "distortion" works against Rift, randarts, and panlord "distorting touch"
         -- TODO: check to see if this catches dancing weapons?
         {conditions = {check_tdesc(mons, "[dD]istort"), you.branch() ~= "Zig"},
+               tier = 3,
              reason = "Distortion weapon!"} ,
         {conditions = {check(mons, "Malmutate"), you.branch() ~= "Zig"},
+               tier = 2,
              reason = "Malmutator in LOS"} ,
         -- XXX: I'd prefer to check lof against "Malmutate" here, but it seems like spells.path() only works with player spells?
         {conditions = {check(mons, "Malmutate"), check_lof(mons), you.branch() ~= "Zig"},
+               tier = 3,
              reason = "Malmutator in LOF!"} ,
         {conditions = {mons:name() == "orb of fire", you.res_fire() < 3},
+               tier = 3,
              reason = "Orb of Fire and low rF"} ,
         {conditions = {mons:is_unique() == true},
+               tier = 3,
              reason = "Unique monster, careful!"} ,
         {conditions = {check_rare_ood(mons)},
+               tier = 3,
              reason = "OOD monster, careful!"} ,
         {conditions = {check(mons, "Creeping Frost"), you.res_cold() < 1},
+               tier = 2,
              reason = "Creeping Frost and no rC"} ,
         -- Most major rElec mons have Lightning Bolt:
         -- This covers electric golems, titans, storm dragons, antaeus, multiple uniques;
         -- also many smaller mons, inc. annihilators, air mages.
         {conditions = {check(mons, "Lightning Bolt"), you.res_shock() < 1},
+               tier = 2,
              reason = "Lightning Bolt and no rElec"} ,
         -- Chain Lightning only exists on Nikola at present, but this check is here in case some dev gets creative
         {conditions = {check(mons, "Chain Lightning"), you.res_shock() < 1},
+               tier = 3,
              reason = "Chain Lightning and no rElec"} ,
         {conditions = {mons:name() == "Nikola", you.res_shock() < 1},
+               tier = 3,
              reason = "Nikola and no rElec"} ,
         {conditions = {mons:name() == "Nikola", check_tdesc(mons, "[sS]ilenced") ~= true and mons:status("waterlogged") ~= true},
+               tier = 3,
              reason = "Nikola in LOS and not silenced or waterlogged"} ,
         -- shock serpents, electric eels, lightning spires
         {conditions = {check(mons, "Electrical Bolt"), you.res_shock() < 1},
+               tier = 2,
              reason = "Electrical Bolt and no rElec"} ,
         -- lom lobon
         {conditions = {check(mons, "Conjure Ball Lightning"), you.res_shock() < 1},
+               tier = 3,
              reason = "Conjure Ball Lightning and no rElec"} ,
         -- ironbound thunderhulks, lodul
         {conditions = {check(mons, "Call Down Lightning"), you.res_shock() < 1},
+               tier = 3,
              reason = "Call Down Lightning and no rElec"} ,
         {conditions = {string.find(mons:name(), "[sS]imulacrum") ~= nil, you.res_cold() < 1},
+               tier = 2,
              reason = "simulacrum and no rC, careful"} ,
         {conditions = {string.find(mons:name(), "[sS]imulacrum") ~= nil, string.find(mons:speed_description(), "fast") ~= nil,
                        you.res_cold() < 1},
+               tier = 3,
              reason = mons:speed_description() .. " simulacrum and no rC, watch out!!"} ,
         {conditions = {check(mons, "Bolt of Cold"), you.res_cold() < 1},
+               tier = 2,
              reason = "Bolt of Cold and no rC"} ,
         {conditions = {check(mons, "Cold Breath"), you.res_cold() < 1},
+               tier = 2,
              reason = "Cold Breath and no rC"} ,
         {conditions = {check(mons, "Glaciate"), you.res_cold() < 3},
+               tier = 3,
              reason = "Glaciate and not rC+++, watch out!"} ,
         {conditions = {check(mons, "Polar Vortex"), you.res_cold() < 3},
+               tier = 3,
              reason = "Polar Vortex and not rC+++, careful!"} ,
         -- antaeus, josephina, rime drakes
         {conditions = {check(mons, "Flash Freeze"), you.res_cold() < 2},
+               tier = 3,
              reason = "Flash Freeze and not rC++, careful!"} ,
         -- josephina, wendigo
         {conditions = {check(mons, "Seracfall"), you.res_cold() < 3},
+               tier = 3,
              reason = "Seracfall and not rC+++, careful!"} ,
         {conditions = {check(mons, "Doom Howl"), mons:is("ready_to_howl"), you.branch() ~= "Zig"},
+               tier = 3,
              reason = "Doom Howl in LOS, hex it or something"} ,
         {conditions = {check(mons, "Symbol of Torment"), you_res_torment() ~= true},
+               tier = 3,
              reason = "Torment and not torment immune!"} ,
         {conditions = {check(mons, "Dispel Undead Range"), you_are_undead() == true},
+               tier = 3,
              reason = "Dispel Undead in LOS while undead!"} ,
         {conditions = {check_tdesc(mons, "Undeadhunter"), you_are_undead() == true},
+               tier = 3,
              reason = "wielding Undeadhunter while undead, watch out!!"} ,
         -- xtahua (3d40)
         {conditions = {check(mons, "Searing Breath"), you.res_fire() < 3},
+               tier = 3,
              reason = "Searing Breath (3d40) and not rF+++, watch out!"} ,
         -- hellephant (3d40), fire dragon (3d24), lindwurm (3d18), hell hound (3d10)
         -- TODO: maybe dynamically check ability descriptors for something like '3d40',
         -- to get rid of the hardcoded hellephant check here?
         {conditions = {check(mons, "Fire Breath"), mons:name() ~= "hellephant", you.res_fire() < 1},
+               tier = 2,
              reason = "Fire Breath and not rF+, careful"} ,
         {conditions = {check(mons, "Fire Breath"), mons:name() == "hellephant", you.res_fire() < 3},
+               tier = 3,
              reason = "Fire Breath (3d40) and not rF+++, watch out!"} ,
         -- 10 mons: orb of fire (3d43), margery (3d33), draconian scorcher (3d26), fire giant (3d26),
         -- deep elf elementalist (3d23), balrug (3d23), azrael (3d20), hell hog (3d20), wizard (3d19), efreet (3d15)
         {conditions = {check(mons, "Fireball"), mons:name() ~= "orb of fire" and mons:name() ~= "Margery", you.res_fire() < 1},
+               tier = 2,
              reason = "Fireball and not rF+, careful"} ,
         {conditions = {check(mons, "Fireball"), mons:name() == "Margery", you.res_fire() < 2},
+               tier = 3,
              reason = "Fireball (3d33) and not rF++, careful"} ,
         {conditions = {check(mons, "Fireball"), mons:name() == "orb of fire", you.res_fire() < 3},
+               tier = 3,
              reason = "Fireball (3d43) and not rF+++, watch out!"} ,
         -- 16 mons: orb of fire (3d40), margery (3d32) !, mara (3d27) (x3 if mara clones...), golden dragon (3d27), asmodeus (3d26),
         -- tengu reaver (3d26), draconian scorcher (3d25), fire giant (3d25), ophan (3d24), balrug (3d23), azrael (3d20),
         -- hell knight (3d18), deep elf fire mage "pyromancer": (3d17), orc sorcerer (3d17), efreet (3d15), maggie (3d13)
         {conditions = {check(mons, "Bolt of Fire"), mons:name() ~= "orb of fire" and mons:name() ~= "Margery"
                                                     and mons:name() ~= "Mara", you.res_fire() < 1},
+               tier = 2,
              reason = "Bolt of Fire and not rF+, careful"} ,
         {conditions = {check(mons, "Bolt of Fire"), mons:name() == "Margery" or mons:name() == "Mara", you.res_fire() < 2},
+               tier = 3,
              reason = "Bolt of Fire " .. (mons:name() == "Margery" and "(3d32)" or "(3d27)") .. " and not rF++, careful"} ,
         {conditions = {check(mons, "Bolt of Fire"), mons:name() == "orb of fire", you.res_fire() < 3},
-             reason = "Bolt of Fire (3d40) and not rF+++, careful"} ,
+               tier = 3,
+             reason = "Bolt of Fire (3d40) and not rF+++, watch out!"} ,
         -- 5 mons: draconian scorcher (3d25), roxanne (3d23), salamander mystic (3d18), ogre mage (3d18), molten gargoyle (3d15)
         {conditions = {check(mons, "Bolt of Magma"), string.find(mons:name(), "draconian scorcher") == nil
                                                      and mons:name() ~= "Roxanne", you.res_fire() < 1},
+               tier = 2,
              reason = "Bolt of Magma and not rF+, careful"} ,
         {conditions = {check(mons, "Bolt of Magma"), string.find(mons:name(), "draconian scorcher") ~= nil
                                                      or mons:name() == "Roxanne" , you.res_fire() < 3},
+               tier = 3,
              reason = "Bolt of Magma (irresistible ~3d30+ equivalent) and not rF+++, watch out!"} , }
 
         local generic_damage_entries = check_generic_damage(mons)
@@ -805,17 +864,13 @@ local status = {
             table.insert(danger_table, entry)
         end
 
-        -- TODO: split up warnings into 3 tiers, based on damage and resist type:
-        -- t1 -> low threat (d10,d20 / rX1 ele warnings), yellow warning text, no force more
-        -- t2 -> mid threat (d30 / rX2 ele warnings, ~banish?), red? warning text, force more
-        -- t3 -> max threat (d40+ rX3, paralyse), purple? warning text, force more, flash screen? (maybe y/n prompt to continue?)
-
+        -- TODO: add generic short (targeter?) description "carrying a wand" warning
         -- TODO: maybe remove the base OOF name check, since its spells are now accounted for separately
         -- alternate approach: remove the OOF-specific bolt of fire and fireball checks, since they're spamming twice per OOF,
         -- and instead just rely on the single old-style oof rF3 warning
         -- TODO: adjust the IMMINENT DEATH checks to account for player resistance, right now they work off of base damage only,
         -- which fires warnings pretty much instantly vs. d40s / glaciate
-        -- TODO: make the 50% MHP warnings flash instead of more, more for this is kind of spammy
+        -- TODO: same deal as above with the 50% MHP warnings
         -- TODO: handle call down damnation and hurl damnation
         -- TODO: handle radroach irradiate
         -- TODO: handle ophan "Holy Flames" vs. unholy/undead player check
@@ -827,6 +882,9 @@ local status = {
         -- TODO: handle Spit Acid and no rCorr
         -- TODO: look into which other rCorr abilities should be warned
 
+        for _,entry in ipairs(danger_table) do
+            assert(type(entry.conditions ~= "table") and type(entry.tier ~= "number") and type(entry.reason ~= "string"))
+        end
 -- end danger table
 
         for _,threat in ipairs(danger_table) do
@@ -835,14 +893,14 @@ local status = {
                 -- if this entry to current_threats matches a known_threats entry, don't warn about it,
                 -- but also delete the matching known_threats entry, so that we can properly warn about duplicate threats.
                 for key,entry in pairs(known_threats) do
-                    if entry[1]:name() == mons:name() and entry[2] == threat.reason then
+                    if entry[1]:name() == mons:name() and entry.reason == threat.reason then
                         needs_warn = false
                         table.remove(known_threats, key)
                         break
                     end
                 end
 
-                table.insert(current_threats, {mons, threat.reason})
+                table.insert(current_threats, {mons, tier = threat.tier, reason = threat.reason})
                 if needs_warn then self:_warn() end
             end
         end
