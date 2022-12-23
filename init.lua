@@ -956,14 +956,24 @@ function c_message(text, channel)
     end
 end
 
--- view.feature_at(x,y) returns the second name string in feature-data.h, feature_def feat_defs[] ,
--- this is the "vaultname" string that includes underscores
-function check_adjacent_feat(string)
+-- Does the given feature exist adjacent to the player?
+--
+-- For this, we compare against view.feature_at(x,y),
+-- which returns the second name string in feature-data.h, feature_def feat_defs[],
+-- this is the "vaultname" string that includes underscores.
+--
+-- If ignore_excluded is true, we treat tiles with exclusions as though they do not contain the feature.
+-- @param string "feature_name"
+-- @param bool[opt="false"] ignore_excluded
+-- @return bool
+function check_adjacent_feat(string, ignore_excluded)
+    ignore_excluded = ignore_excluded or false
     local feature = nil
     for i = -1,1 do
         for j = -1,1 do
             feature = view.feature_at(i,j)
-            if feature == string and travel.is_excluded(i,j) == false then return true end
+            if ignore_excluded == true and travel.is_excluded(i,j) == true then return false end
+            if feature == string then return true end
         end
     end
     return false
@@ -977,7 +987,7 @@ function ch_stop_running(runmode)
     -- These conditions test if our autoexplore was interrupted early due to travel_open_doors = avoid.
     -- XXX: This check is imperfect, and is likely to send the script into infinite autoexplore loops.
     -- I've added an assert and some harder checks to maybe_reissue_autoexplore(), but this could still be improved.
-    if runmode == "explore_greedy" and check_adjacent_feat("closed_door") and you.feel_safe() then
+    if runmode == "explore_greedy" and check_adjacent_feat("closed_door", true) and you.feel_safe() then
         reissue_autoexplore_needed = true
     end
 end
