@@ -791,7 +791,14 @@ local status = {
         {conditions = {check(mons, "Bolt of Fire"), mons:name() == "Margery" or mons:name() == "Mara", you.res_fire() < 2},
              reason = "Bolt of Fire " .. (mons:name() == "Margery" and "(3d32)" or "(3d27)") .. " and not rF++, careful"} ,
         {conditions = {check(mons, "Bolt of Fire"), mons:name() == "orb of fire", you.res_fire() < 3},
-             reason = "Bolt of Fire (3d40) and not rF+++, careful"} , }
+             reason = "Bolt of Fire (3d40) and not rF+++, careful"} ,
+        -- 5 mons: draconian scorcher (3d25), roxanne (3d23), salamander mystic (3d18), ogre mage (3d18), molten gargoyle (3d15)
+        {conditions = {check(mons, "Bolt of Magma"), string.find(mons:name(), "draconian scorcher") == nil
+                                                     and mons:name() ~= "Roxanne", you.res_fire() < 1},
+             reason = "Bolt of Magma and not rF+, careful"} ,
+        {conditions = {check(mons, "Bolt of Magma"), string.find(mons:name(), "draconian scorcher") ~= nil
+                                                     or mons:name() == "Roxanne" , you.res_fire() < 3},
+             reason = "Bolt of Magma (irresistible ~3d30+ equivalent) and not rF+++, watch out!"} , }
 
         local generic_damage_entries = check_generic_damage(mons)
         for _,entry in ipairs(generic_damage_entries) do
@@ -803,7 +810,6 @@ local status = {
         -- t2 -> mid threat (d30 / rX2 ele warnings, ~banish?), red? warning text, force more
         -- t3 -> max threat (d40+ rX3, paralyse), purple? warning text, force more, flash screen? (maybe y/n prompt to continue?)
 
-        -- TODO: handle bolt of magma
         -- TODO: maybe remove the base OOF name check, since its spells are now accounted for separately
         -- alternate approach: remove the OOF-specific bolt of fire and fireball checks, since they're spamming twice per OOF,
         -- and instead just rely on the single old-style oof rF3 warning

@@ -224,6 +224,17 @@ end
         --
         -- I could maybe reconstruct the spell to beam, beam to zap, zap to resist tables in Lua,
         -- and add an assert for (new,unknown) spells that don't exist in my tables
-        --
 
+-------
 
+        -- bolt of magma is BEAM_LAVA which returns 55 from get_resistible_fraction, it looks like this is 45% irresistible?
+        -- looking at the code in resist_adjust_damage, resists only apply to the resistible portion
+        -- bolt of fire with rF1 reduces damage by half: 3d26 becomes ~3d13
+        -- bolt of magma with rF1 reduces resistible portion by half: 3d25 becomes 11.25 irres, 13.75 res, /2 == 6.875, == 18.125
+        -- bolt of magma @ base 3d25 w rF1 would == ~3d18, rF2 == 15.83 == ~3d16, rF3 == 3d14
+        -- by this analysis, most bolt of magma mons are fine with rF1, but scorchers and roxanne should have rF3?
+        -- drac scorcher magma rF2 @ ~3d16 is ~ to margery bolt of fire 3d32 with rF1 @ ~3d16, which isn't quite enough
+        -- roxanne magma rF2 @ ~14.56 is slightly better, but still ~ 3d30 bolt of fire with rF1 only
+        -- I guess my gamesense that you don't need rF3 for roxanne is wrong because I never fight roxanne?
+
+-------
