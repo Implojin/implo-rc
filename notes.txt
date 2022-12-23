@@ -193,3 +193,37 @@ end
 
 -------
 
+        {conditions = {check(mons, "Fireball"), you.res_fire() < 1},
+             reason = "Fireball and not rF+, careful"} ,
+        {conditions = {check(mons, "Fireball", 60), you.res_fire() < 2},
+             reason = "Fireball (3d20+) and not rF++, careful"} ,
+        {conditions = {check(mons, "Fireball", 120), you.res_fire() < 3},
+             reason = "Fireball (3d40+) and not rF+++, watch out!"} , }
+
+-------
+
+        -- 10 mons: orb of fire (3d43), margery (3d33), draconian scorcher (3d26), fire giant (3d26),
+        -- deep elf elementalist (3d23), balrug (3d23), azrael (3d20), hell hog (3d20), wizard (3d19), efreet (3d15)
+        {conditions = {check(mons, "Fireball"), mons:name() ~= "orb of fire" and mons:name() ~= "Margery", you.res_fire() < 1},
+             reason = "Fireball and not rF+, careful"} ,
+        {conditions = {check(mons, "Fireball"), mons:name() == "Margery", you.res_fire() < 2},
+             reason = "Fireball (3d33) and not rF++, careful"} ,
+        {conditions = {check(mons, "Fireball"), mons:name() == "orb of fire", you.res_fire() < 3},
+             reason = "Fireball (3d43) and not rF+++, watch out!"} , }
+
+-------
+
+        -- TODO: Is there any way I can auto-generate resist value needed vs. ability damage? (d10, d20, r+, d30 r++, d40 r+++)
+        -- TODO: look at tengu reaver mons:desc(true) for the above: they have six types of bolt spells,
+        -- could possibly auto-compare using <color> tag of spells in mons:desc()
+        -- ynoxinul iron shot is the same colour as most elec spells,
+        -- fenstrider witch hurl sludge is the same colour as poison spells but not resistable,
+        -- LCS is white, petrifying cloud is white, most ice spells are also white,
+        -- I don't think that distinguishing resistable spell element by text colour is going to work,
+        -- the codebase is too inconsistent about how colour is applied
+        --
+        -- I could maybe reconstruct the spell to beam, beam to zap, zap to resist tables in Lua,
+        -- and add an assert for (new,unknown) spells that don't exist in my tables
+        --
+
+

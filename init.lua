@@ -781,22 +781,38 @@ local status = {
         {conditions = {check(mons, "Fireball"), mons:name() == "Margery", you.res_fire() < 2},
              reason = "Fireball (3d33) and not rF++, careful"} ,
         {conditions = {check(mons, "Fireball"), mons:name() == "orb of fire", you.res_fire() < 3},
-             reason = "Fireball (3d43) and not rF+++, watch out!"} , }
+             reason = "Fireball (3d43) and not rF+++, watch out!"} ,
+        -- 16 mons: orb of fire (3d40), margery (3d32) !, mara (3d27) (x3 if mara clones...), golden dragon (3d27), asmodeus (3d26),
+        -- tengu reaver (3d26), draconian scorcher (3d25), fire giant (3d25), ophan (3d24), balrug (3d23), azrael (3d20),
+        -- hell knight (3d18), deep elf fire mage "pyromancer": (3d17), orc sorcerer (3d17), efreet (3d15), maggie (3d13)
+        {conditions = {check(mons, "Bolt of Fire"), mons:name() ~= "orb of fire" and mons:name() ~= "Margery"
+                                                    and mons:name() ~= "Mara", you.res_fire() < 1},
+             reason = "Bolt of Fire and not rF+, careful"} ,
+        {conditions = {check(mons, "Bolt of Fire"), mons:name() == "Margery" or mons:name() == "Mara", you.res_fire() < 2},
+             reason = "Bolt of Fire " .. (mons:name() == "Margery" and "(3d32)" or "(3d27)") .. " and not rF++, careful"} ,
+        {conditions = {check(mons, "Bolt of Fire"), mons:name() == "orb of fire", you.res_fire() < 3},
+             reason = "Bolt of Fire (3d40) and not rF+++, careful"} , }
 
         local generic_damage_entries = check_generic_damage(mons)
         for _,entry in ipairs(generic_damage_entries) do
             table.insert(danger_table, entry)
         end
 
-        -- TODO: Is there any way I can auto-generate resist value needed vs. ability damage? (d10, d20, r+, d30 r++, d40 r+++)
-        -- TODO: split up warnings into 3 tiers, based on the above:
+        -- TODO: split up warnings into 3 tiers, based on damage and resist type:
         -- t1 -> low threat (d10,d20 / rX1 ele warnings), yellow warning text, no force more
         -- t2 -> mid threat (d30 / rX2 ele warnings, ~banish?), red? warning text, force more
         -- t3 -> max threat (d40+ rX3, paralyse), purple? warning text, force more, flash screen? (maybe y/n prompt to continue?)
-        -- TODO: handle bolt of fire
+
         -- TODO: handle bolt of magma
+        -- TODO: maybe remove the base OOF name check, since its spells are now accounted for separately
+        -- alternate approach: remove the OOF-specific bolt of fire and fireball checks, since they're spamming twice per OOF,
+        -- and instead just rely on the single old-style oof rF3 warning
+        -- TODO: adjust the IMMINENT DEATH checks to account for player resistance, right now they work off of base damage only,
+        -- which fires warnings pretty much instantly vs. d40s / glaciate
+        -- TODO: make the 50% MHP warnings flash instead of more, more for this is kind of spammy
         -- TODO: handle call down damnation and hurl damnation
         -- TODO: handle radroach irradiate
+        -- TODO: handle ophan "Holy Flames" vs. unholy/undead player check
         -- TODO: handle revenant ghostly fireball (rN check)
         -- TODO: generic "mons carrying wand" check
         -- TODO: generic "mons carrying randart/unrand check"
