@@ -868,7 +868,17 @@ local status = {
                tier = 3,
              -- This pattern should match against (charges) and (success%), but I think the game only displays (charges) here
              reason = "carrying a " .. (string.match(mons:target_desc(), "wand of %w+ %(%d+%%?%)") or "unknown/nonexistent wand?")
-                                    .. ", careful!"} , }
+                                    .. ", careful!"} ,
+        -- damnation checks
+        {conditions = {check(mons, "Hurl Damnation"), check_lof(mons) ~= true},
+               tier = 2,
+             reason = "Damnation in LOS, careful!"} ,
+        {conditions = {check(mons, "Hurl Damnation"), check_lof(mons) == true},
+               tier = 3,
+             reason = "Damnation in LOF, watch out!"} ,
+        {conditions = {check(mons, "Call Down Damnation")},
+               tier = 3,
+             reason = "Damnation (smite) in LOS, watch out!"} , }
 
         local generic_damage_entries = check_generic_damage(mons)
         for _,entry in ipairs(generic_damage_entries) do
@@ -889,6 +899,7 @@ local status = {
         -- TODO: something like "warning: min TTL < 1 turn!!", "warning: min TTL < 2 turns!",
         -- "avg TTL < 3 turns", etc.; compare against total known onscreen damage values for this
         -- TODO: handle Spit Acid and no rCorr
+        -- TODO: handle Corrosive Bolt and no rCorr
         -- TODO: look into which other rCorr abilities should be warned
 
         for _,entry in ipairs(danger_table) do
