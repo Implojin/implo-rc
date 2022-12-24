@@ -636,17 +636,27 @@ function maybe_reissue_autoexplore()
     return false
 end
 
+-- Returns true if this mons should be treated as threatening for autotravel, warning, and combat purposes.
+-- This function exists because mons:is_firewood() doesn't cover all such cases.
+-- @param mons mons
+-- @return bool
+function is_threatening(mons)
+    if mons:is_firewood() and mons:name() ~= "briar patch" then return false end
+    if mons:name() == "butterfly" then return false end
+    return mons:attitude() < ATT_NEUTRAL
+end
+
 local status = {
     _update_mons = function()
         local LOS = you.los()
-        local m = nil
+        local mons = nil
         mons_table = {}
 
         for i = -LOS,LOS do
             for j = -LOS,LOS do
-                m = monster.get_monster_at(i,j)
-                if m and you.see_cell_no_trans(i,j) and m:attitude() < ATT_NEUTRAL then
-                    table.insert(mons_table, m)
+                mons = monster.get_monster_at(i,j)
+                if mons and you.see_cell_no_trans(i,j) and is_threatening(mons) then
+                    table.insert(mons_table, mons)
                 end
             end
         end
