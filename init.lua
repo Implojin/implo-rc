@@ -709,14 +709,10 @@ local status = {
         {conditions = {check(mons, "Stunning Burst"), you.res_shock() < 1},
                tier = 3,
              reason = "Stunning Burst (paralyse) and no rElec"} ,
-        -- TODO: I'd like to deduplicate this but atm it's not worth the code, revisit this after adding all threat conditions
-        -- (if there are enough conditions that need dedup I can change all reasons to a function return and update the caller)
-        {conditions = {check(mons, "Paralysis Gaze"), mons:status("fully charged") ~= true},
+        {conditions = {check(mons, "Paralysis Gaze")},
                tier = 3,
-             reason = "irresistable Paralysis Gaze in LOS, but not channelling yet"} ,
-        {conditions = {check(mons, "Paralysis Gaze"), mons:status("fully charged") == true},
-               tier = 3,
-             reason = "channelling irresistable Paralysis Gaze!"} ,
+             reason = "Irresistable Paralysis Gaze (pierces LOF) " .. (mons:status("fully charged") ~= true and "is charging!"
+                                                                       or "is ready to fire!!")} ,
         {conditions = {check(mons, "Confusion Gaze"), you.willpower() < 3},
                tier = 2,
              reason = "Confusion Gaze and low Will"} ,
