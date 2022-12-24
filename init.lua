@@ -891,7 +891,6 @@ local status = {
         -- TODO: adjust the IMMINENT DEATH checks to account for player resistance, right now they work off of base damage only,
         -- which fires warnings pretty much instantly vs. d40s / glaciate
         -- TODO: same deal as above with the 50% MHP warnings
-        -- TODO: handle call down damnation and hurl damnation
         -- TODO: handle radroach irradiate
         -- TODO: handle ophan "Holy Flames" vs. unholy/undead player check
         -- TODO: handle revenant ghostly fireball (rN check)
