@@ -818,6 +818,9 @@ local status = {
         {conditions = {check_tdesc(mons, "Undeadhunter"), you_are_undead() == true},
                tier = 3,
              reason = "wielding Undeadhunter while undead, watch out!!"} ,
+        {conditions = {check_tdesc(mons, "holy wrath"), you_are_undead() == true},
+               tier = 3,
+             reason = "wielding holy wrath while undead, watch out!!"} ,
         -- xtahua (3d40)
         {conditions = {check(mons, "Searing Breath"), you.res_fire() < 3},
                tier = 3,
