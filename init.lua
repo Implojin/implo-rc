@@ -587,7 +587,10 @@ end
 
 -- This function is patterned after player::undead_state(), for purpose of checking Dispel Undead vulnerability.
 -- As found in bolt::affect_player_enchantment , all undead states not (you.undead_state() == US_ALIVE) are vulnerable to DU.
-function you_are_undead()
+-- @param bool exempt_living_vp
+-- @return bool
+function you_are_undead(exempt_living_vp)
+    assert(type(exempt_living_vp) == "boolean")
     -- if (form == transformation::lich)
     local transform = you.transform()
     if transform == "lich" then return true end
@@ -598,12 +601,27 @@ function you_are_undead()
     if species == "Ghoul" or species == "Mummy" then
         return true
     end
-    -- Here we deviate from player::undead_state() : DU Range and Undeadhunter check holiness, which exempts Alive Vp.
+    -- If exempt_living_vp is passed as true, we deviate from player::undead_state().
+    -- This is relevant for DU Range and Undeadhunter, which check holiness, which exempts Alive Vp.
     -- As far as I can tell, mons have no way of casting DU at Alive Vp, even though they would technically take damage from it.
-    if species == "Vampire" and string.find(you.mutation_overview(), "alive") == nil then
-        return true
+    if species == "Vampire" then
+        if exempt_living_vp == false then
+            return true
+        elseif exempt_living_vp == true and string.find(you.mutation_overview(), "alive") == nil then
+            return true
+        end
     end
+
     return false
+end
+
+-- This function exists to check vulnerability to holy wrath weapons.
+-- player::res_holy_energy() checks player::undead_or_demonic(), which returns undead_state(temp) || species == SP_DEMONSPAWN
+-- Notably, that test does not exempt living vp, so we don't either.
+function you_are_unholy()
+    local species = you.race()
+    if species == "Demonspawn" then return true end
+    return you_are_undead(false)
 end
 
 -- XXX: The logic that sets state for this below is necessarily ill-defined:
@@ -812,15 +830,15 @@ local status = {
         {conditions = {check(mons, "Symbol of Torment"), you_res_torment() ~= true},
                tier = 3,
              reason = "Torment and not torment immune!"} ,
-        {conditions = {check(mons, "Dispel Undead Range"), you_are_undead() == true},
+        {conditions = {check(mons, "Dispel Undead Range"), you_are_undead(true) == true},
                tier = 3,
              reason = "Dispel Undead in LOS while undead!"} ,
-        {conditions = {check_tdesc(mons, "Undeadhunter"), you_are_undead() == true},
+        {conditions = {check_tdesc(mons, "Undeadhunter"), you_are_undead(true) == true},
                tier = 3,
              reason = "wielding Undeadhunter while undead, watch out!!"} ,
-        {conditions = {check_tdesc(mons, "holy wrath"), you_are_undead() == true},
+        {conditions = {check_tdesc(mons, "holy wrath"), you_are_unholy() == true},
                tier = 3,
-             reason = "wielding holy wrath while undead, watch out!!"} ,
+             reason = "wielding holy wrath while unholy, watch out!!"} ,
         -- xtahua (3d40)
         {conditions = {check(mons, "Searing Breath"), you.res_fire() < 3},
                tier = 3,
@@ -903,6 +921,8 @@ local status = {
         -- TODO: handle Spit Acid and no rCorr
         -- TODO: handle Corrosive Bolt and no rCorr
         -- TODO: look into which other rCorr abilities should be warned
+        -- TODO: "if it's unique, and asleep, and at abs(maxlos) from 0,0", auto set an exclude
+        -- maybe do the same thing if it's OOD? or tripping any huge damage / rF+++ flags?
 
         for _,entry in ipairs(danger_table) do
             assert(type(entry.conditions ~= "table") and type(entry.tier ~= "number") and type(entry.reason ~= "string"))
@@ -994,6 +1014,9 @@ function check_adjacent_feat(string, ignore_excluded)
     for i = -1,1 do
         for j = -1,1 do
             feature = view.feature_at(i,j)
+            -- XXX: there's a logic error here? it's returning immediately, not checking any other tiles,
+            -- if it finds *one* that's excluded. I need to flip the tests and only return true from within this for do
+            -- TODO: FIXME
             if ignore_excluded == true and travel.is_excluded(i,j) == true then return false end
             if feature == string then return true end
         end
