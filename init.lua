@@ -875,7 +875,6 @@ local status = {
             table.insert(danger_table, entry)
         end
 
-        -- TODO: add generic short (targeter?) description "carrying a wand" warning
         -- TODO: maybe remove the base OOF name check, since its spells are now accounted for separately
         -- alternate approach: remove the OOF-specific bolt of fire and fireball checks, since they're spamming twice per OOF,
         -- and instead just rely on the single old-style oof rF3 warning
@@ -886,7 +885,6 @@ local status = {
         -- TODO: handle radroach irradiate
         -- TODO: handle ophan "Holy Flames" vs. unholy/undead player check
         -- TODO: handle revenant ghostly fireball (rN check)
-        -- TODO: generic "mons carrying wand" check
         -- TODO: generic "mons carrying randart/unrand check"
         -- TODO: something like "warning: min TTL < 1 turn!!", "warning: min TTL < 2 turns!",
         -- "avg TTL < 3 turns", etc.; compare against total known onscreen damage values for this
