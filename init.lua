@@ -667,7 +667,7 @@ local status = {
         local tier = threat.tier
         local colour = "yellow"
         if tier > 1 then colour = "yellow" end
-        if tier > 2 then colour = "magenta" end
+        if tier > 2 then colour = "lightred" end
 
         crawl.formatted_mpr("<lightred>Danger: " .. threat[1]:name() .. "</lightred> |T" .. tostring(tier) .. "| " ..
                             "<" .. colour .. ">Reason: " .. threat.reason .. "</" .. colour .. ">")
