@@ -863,7 +863,12 @@ local status = {
         {conditions = {check(mons, "Bolt of Magma"), string.find(mons:name(), "draconian scorcher") ~= nil
                                                      or mons:name() == "Roxanne" , you.res_fire() < 3},
                tier = 3,
-             reason = "Bolt of Magma (irresistible ~3d30+ equivalent) and not rF+++, watch out!"} , }
+             reason = "Bolt of Magma (irresistible ~3d30+ equivalent) and not rF+++, watch out!"} ,
+        {conditions = {check_tdesc(mons, "carrying a wand")},
+               tier = 3,
+             -- This pattern should match against (charges) and (success%), but I think the game only displays (charges) here
+             reason = "carrying a " .. (string.match(mons:target_desc(), "wand of %w+ %(%d+%%?%)") or "unknown/nonexistent wand?")
+                                    .. ", careful!"} , }
 
         local generic_damage_entries = check_generic_damage(mons)
         for _,entry in ipairs(generic_damage_entries) do
