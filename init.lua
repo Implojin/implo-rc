@@ -449,7 +449,7 @@ function check_generic_damage(mons)
     -- (this will require doing it from outside of this function)
 
     for _,entry in ipairs(danger_entries) do
-        assert(type(entry.conditions ~= "table") and type(entry.tier ~= "number") and type(entry.reason ~= "string"))
+        assert(type(entry.conditions) == "table" and type(entry.tier) == "number" and type(entry.reason) == "string")
     end
     return danger_entries
 end
@@ -925,7 +925,7 @@ local status = {
         -- maybe do the same thing if it's OOD? or tripping any huge damage / rF+++ flags?
 
         for _,entry in ipairs(danger_table) do
-            assert(type(entry.conditions ~= "table") and type(entry.tier ~= "number") and type(entry.reason ~= "string"))
+            assert(type(entry.conditions) == "table" and type(entry.tier) == "number" and type(entry.reason) == "string")
         end
 -- end danger table
 
