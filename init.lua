@@ -3,7 +3,8 @@
 travel_delay = -1
 explore_delay = -1
 rest_delay = -1
-view_delay = 0
+# try to increase flash_screen_message visibility with use_animations == false
+view_delay = 1000
 show_travel_trail = true
 use_animations = false
 
@@ -16,11 +17,18 @@ travel_key_stop = false
 # re-set travel_open_doors = false, this was set in my old rc but removed -.-
 travel_open_doors = avoid
 
-# try to reduce keyboard delay for realtime games
-# for local games, this can = keyboard debounce time (in milliseconds),
-# but for online play, let's set it to server ping (in ms)
-tile_runrest_rate = 0
-tile_key_repeat_delay = 43
+# This setting affects the time needed to hold down a key, before the game registers it as repeat inputs.
+# We basically never want this to happen.
+# It's only rarely desirable in realtime games, when autofighting groups of trivial mons by holding Tab.
+# Setting this too low will cause unintended multi-taps, setting this too high will cause holding Tab to take longer to trigger.
+# It's better to err on the side of setting this too high. 
+tile_key_repeat_delay = 150
+
+# try to force the game to redraw at minimum ~20fps, to help the player contextualize auto-handler actions
+# redrawing faster than this is probably excessive for online play, even though automated actions can and will occur much faster
+# TODO: Force a redraw and a small delay with every auto-handler action, so the player can see them?
+tile_update_rate = 50
+tile_runrest_rate = 50
 
 # prevent autofight from changing behavior at arbitrary HP threshold
 autofight_stop = 0
@@ -694,6 +702,11 @@ local status = {
         -- Here, we have to rely on the rcfile flash_screen_message option, pattern matching our (custom) printed tier messages.
 
         if tier >= 3 then crawl.more() end
+
+        if tier >=2 then
+            crawl.redraw_screen()
+            crawl.delay(250)
+        end
     end,
     _check_threat = function(self,mons)
         -- when in debug mode, print the monster status table to mpr
