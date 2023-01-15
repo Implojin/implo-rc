@@ -1,0 +1,173 @@
+
+Doing autoforms is more complex than it seems at first glance; the basic problem set is this:
+
+Whenever the player issues a delayed action, forms can+will drop during that delayed action.
+
+----
+There are different approaches to "solving" this:
+
+1) interrupt those delays with chk_interrupt_activity,
+to allow the script to recast forms while they're still (expiring).
+
+This approach avoids allowing forms to drop, interrupting delays to recast forms before they wear off.
+
+
+2) wait for the delays to finish naturally,
+then have the script recast forms afterward.
+
+This approach allows forms to drop during delays, then recasts them.
+
+----
+Additionally, delayed actions can lead directly into combat situations:
+Autoexplore is the main culprit here, but so is resting, and so is issuing a > stair delay.
+
+In all of these cases, the player can press a button that issues a delay,
+and on the very next turn after the delay naturally concludes, have hostile monsters in LOS.
+
+Thus, if your purpose in scripting auto-forms is to have forms active at the beginning of combat,
+(ideally with maximal remaining duration),
+waiting for delays to naturally conclude, obviates the purpose in scripting this.
+
+Therefore, to "solve" this, you want your script to be able to interrupt any delay that can lead directly into a combat situation,
+so that it can re-up form duration as desired.
+
+----
+However, interrupting delays breaks many basic Crawl behaviors!
+
+Interrupting "travel" breaks autoexplore.
+
+Interrupting "rest" breaks resting to heal.
+
+Interrupting "run" may be the least intrusive of these,
+as issuing a shift+dir rundelay is a less frequent occurrence in the first place,
+but having rundelays broken is still intrusive!
+[Question: Does interlevel "G>" travel issue a rundelay or a travel delay?]
+
+Interrupting a "descending stairs" delay causes the player to have to press > again, at minimum,
+but it may also kill the player if they are trying to descend to escape a threat!
+
+Interrupting an "ascending stairs" delay has the same issue as above, but is much more obviously dangerous:
+Players commonly retreat with < , after their first foray onto a new floor with > , if they've descended into a bad floor situation!
+
+----
+In short, you never want to interrupt a stair delay if there are hostile monsters in LOS,
+and handling the other interrupts requires careful state tracking and re-issuing of their parent commands --
+
+but to complicate things further, the parent commands that issued these delays can be ambiguous!
+
+----
+If the player is resting, did they press '5'? Or did they press '.'?
+
+
+If the player's travel delay just ended, was it an "explore_greedy", or was it an "intertravel" (interlevel travel)?
+
+If the player was descending stairs, have they done so directly by pressing '>'?
+Or have they done so indirectly, by issuing a branch travel command like 'GL1\{enter}' ?
+
+----
+There are further issues directly related to recasting:
+
+* Is the player contaminated?
+    They may need to rest prior to attempting a recast, if so.
+* Does the player have sufficient MP to recast the spell?
+    They may be unable to recast without resting first,
+    and they may be in a combat situation that resulted in low MP.
+* Is the player's spell duration for the given form high enough that constant recasting is even a good idea?
+    This is a factor of spell power for each spell, I think, and can probably be added to the script, but ugh.
+* Is it a good idea to attempt a recast *right now*?
+    The player may be in combat,
+    or chasing a temporary portal (making turns a priority),
+    or playing Meteoran (making turns a priority),
+    or low on current zot clock (making turns a priority),
+    or inside of that volcano vault that destroys items (making turns a priority),
+    or travelling through the Hells and trying to avoid passive hell effects
+        (making turns a priority, but also this might not exist anymore in that fashion?),
+    or inside of a Ziggurat and maybe not strictly in combat,
+        but still in a position they've blinked somewhere only temporarily-safe,
+        where wasting a turn recasting a form before it's needed would be undesirable,
+    or similarly in a near-combat / combat-adjacent position, where they're attempting to flee and they've broken LOS,
+        but still in not-trivially-identifiable "danger" by the script.
+        (One example of this is breaking LOS in the abyss.)
+        (Another might be fleeing around a corner from a nearby awake unique.)
+
+(A similar problem here is
+"How would the script identify if it's safe to rest, when it may not know if there are invisible mons nearby?)
+
+----
+So to even attempt a recast in a way that doesn't have unusably-awful UX,
+the script has to be able to identify what command the player issued prior to interrupting a delay,
+and then re-issue that command in a safe way for the character.
+
+Nothing about this is trivial because the parent commands are ambiguous and safety-for-the-character is ambiguous.
+
+----
+Since the clua api doesn't expose parent commands in the context of chk_interrupt_activity
+[[Important question: Does it? What info do the (iname, cause, extra) params expose??]]
+[[TODO: Find this out.]]
+
+If it's true that chk_interrupt_activity doesn't expose parent commands,
+then the scripted approach to polling the player input from the previous turn,
+likely reduces to inserting a keycode shim as ff-rc did.
+
+This introduces all kinds of further complications, 
+including the entire approach breaking while the gamestate is in any non-default command context map,
+such as during e(x)amine.
+
+Using a clua keycode shim is horribly complex and fragile, and should absolutely be avoided, if at all possible.
+That doing so is sort-of-technically-possible, does not mean that anything about it is a good idea.
+
+----
+
+It might be better to skip this approach entirely,
+instead focusing effort on getting a Crawl commit accepted,
+that prevents form duration from ticking down while any kind of multi-turn player delay is active.
+
+So many of these problems stem from that mismatch between the delay code and form duration --
+
+the "when is it safe to recast" issues would still exist,
+but those are at least questions of threat identification and (script-)perceived combat hysteresis,
+
+not kludgy technical workarounds stemming from form duration decrementing during delays.
+
+----
+Possible crawl-side commit title:
+
+Prevent buff durations from decrementing during delayed actions
+
+Prevent player buffs from decrementing during delays
+
+----
+Question: How would this be received by the crawlteam?
+
+Buff duration not decrementing during autoexplore would mean that it becomes optimal to constantly pre-buff
+any player-castable buffs,
+
+of itself, this would increase tedium by encouraging the player to pre-cast before pressing o,
+instead of permitting the (at least theoretically-more-desirable) in-combat choice:
+"Should I use this buff or take a different action"?
+
+Combat choices are more immediate, tense, engaging, better gameplay.
+
+----
+Do you allow the player to pre-buff it, but then disable MP regen during the delay?
+
+How would you ameliorate the obvious tedium incentive, of constantly casting before pressing 'o'?
+
+Is any of this a better idea than forcing the player to cast in-combat?
+
+Would it be a better approach to, instead, disable tmuts from being cast while there isn't a hostile monster in LOS?
+    This would be problematic for lichform megazigs --
+    gozag potpet prebuffing means spending turns at the > with no mons in LOS,
+    end result here would be the player would immediately casting lichform after descending,
+    which is super super dangerous while Tar floors with silent spectres are in the mix.
+
+    At some point this turns into the player's optimal aproach being to leave one hostile monster alive at the end of each zigfloor,
+    so that they can recast prior to going >.
+
+    I suppose this is also problematic for new-hells and new-tomb? Players often want to prebuff lichform before taking >, there.
+
+
+----
+
+
+
