@@ -688,9 +688,10 @@ local status = {
             end
         end
     end,
-    -- TODO: Maybe allow some extreme threats to pop every turn? e.g. paralyse with low Will
-    _warn = function ()
-        local threat = current_threats[#current_threats]
+    -- returns false if a warning did not occur, true if a warning occurred
+    _warn = function(self,threat)
+        if threat.last_warned ~= nil and threat.last_warned == you.turns() then return false end
+
         local tier = threat.tier
         local colour = "yellow"
         if tier > 1 then colour = "yellow" end
@@ -708,6 +709,9 @@ local status = {
             crawl.redraw_screen()
             crawl.delay(250)
         end
+
+        threat.last_warned = you.turns()
+        return true
     end,
     _check_threat = function(self,mons)
         -- when in debug mode, print the monster status table to mpr
@@ -985,8 +989,8 @@ local status = {
                     end
                 end
 
-                table.insert(current_threats, {mons, tier = threat.tier, reason = threat.reason})
-                if needs_warn then self:_warn() end
+                table.insert(current_threats, {mons, tier = threat.tier, reason = threat.reason, last_warned = nil})
+                if needs_warn then self:_warn(current_threats[#current_threats]) end
             end
         end
 
@@ -1000,6 +1004,13 @@ local status = {
 
         -- at the end of each update, replace the known_threats table with the current_threats table
         known_threats = current_threats
+    end,
+    _reissue_warnings = function(self)
+        for _,threat in ipairs(current_threats) do
+            if threat.tier >= 3 then
+                self:_warn(threat)
+            end
+        end
     end,
     _maybe_act = function(self)
 -- begin action table
@@ -1021,9 +1032,17 @@ local status = {
         end
         return did_act
     end,
+    -- ready() can be called multiple times per game turn, if the player takes actions that do not end the turn.
+    -- (e.g. pressing escape, checking inventory with 'i', checking spells with 'I', etc.)
+    -- We don't want the script to rebuild threat tables or reissue warnings if it has already done so this turn,
+    -- therefore, we only take these actions if the game turn has changed.
     update = function(self)
-        self:_update_mons()
-        self:_update_threats()
+        if self._last_updated == nil or self._last_updated ~= you.turns() then
+            self:_update_mons()
+            self:_update_threats()
+            self:_reissue_warnings()
+            self._last_updated = you.turns()
+        end
         self:_maybe_act()
     end, }
 
