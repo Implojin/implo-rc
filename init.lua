@@ -804,7 +804,7 @@ local status = {
                tier = 3,
              reason = "Orb of Fire and low rF"} ,
         {conditions = {mons:is_unique() == true},
-               tier = 3,
+               tier = 2,
              reason = "Unique monster, careful!"} ,
         {conditions = {check_rare_ood(mons)},
                tier = 3,
