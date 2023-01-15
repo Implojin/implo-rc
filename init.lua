@@ -969,7 +969,6 @@ local status = {
         -- TODO: I need to add active status warnings for dangerous player status to this script;
         -- things like petrifying or howl or standing-in-dangerous-cloud or mark or +tele (if the player hasn't read tele)
         -- TODO: check if teleport other even still exists as a monster-castable spell? idk if that was ever removed from hellwings
-        -- TODO: add a basilisk petrify warning?
 
         for _,entry in ipairs(danger_table) do
             assert(type(entry.conditions) == "table" and type(entry.tier) == "number" and type(entry.reason) == "string")
