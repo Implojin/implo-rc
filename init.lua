@@ -294,6 +294,7 @@ local DEBUG_THREATS = false
 local DEBUG_ABIL_XDY = false
 local DEBUG_ABIL_DAM = false
 local DEBUG_ABIL_PCT = false
+local DEBUG_YOU_STATUS = false
 
 local ATT_NEUTRAL = 1
 local mons_table = {}
@@ -763,6 +764,31 @@ local status = {
         {conditions = {check_tdesc(mons, "[dD]istort"), you.branch() ~= "Zig"},
                tier = 3,
              reason = "Distortion weapon!"} ,
+        {conditions = {check_tdesc(mons, "quivering poison"), you.res_poison() < 1, you.branch() ~= "Zig"},
+               tier = 2,
+             reason = "Quivering poison darts and no rPois, careful!"} ,
+        {conditions = {check_tdesc(mons, "quivering curare"), you.res_poison() < 1, you.branch() ~= "Zig"},
+               tier = 3,
+             reason = "Quivering curare and no rPois, watch out!!"} ,
+        {conditions = {check_tdesc(mons, "quivering atropa"), you.branch() ~= "Zig"},
+               tier = 2,
+             reason = "Quivering atropa, careful!"} ,
+        {conditions = {check_tdesc(mons, "quivering datura"), you.branch() ~= "Zig"},
+               tier = 3,
+             reason = "Quivering datura, careful!"} ,
+        {conditions = {check_tdesc(mons, "throwing net"), you.branch() ~= "Zig"},
+               tier = 3,
+             reason = "Quivering throwing nets, watch out!"} ,
+        -- TODO: branded javelins (silver), branded boomerangs (silver, dispersal), branded large rocks (chuck)
+        {conditions = {check_tdesc(mons, "large rock"), you.branch() ~= "Zig"},
+               tier = 2,
+             reason = "Quivering large rocks, watch out!!"} ,
+        {conditions = {check_tdesc(mons, "javelin"), you.branch() ~= "Zig"},
+               tier = 2,
+             reason = "Quivering javelins, watch out!"} ,
+        {conditions = {check_tdesc(mons, "boomerang"), you.branch() ~= "Zig"},
+               tier = 2,
+             reason = "Quivering boomerangs, careful!"} ,
         {conditions = {check(mons, "Malmutate"), you.branch() ~= "Zig"},
                tier = 2,
              reason = "Malmutator in LOS"} ,
@@ -936,6 +962,10 @@ local status = {
         -- TODO: look into which other rCorr abilities should be warned
         -- TODO: "if it's unique, and asleep, and at abs(maxlos) from 0,0", auto set an exclude
         -- maybe do the same thing if it's OOD? or tripping any huge damage / rF+++ flags?
+        -- TODO: I need to add active status warnings for dangerous player status to this script;
+        -- things like petrifying or howl or standing-in-dangerous-cloud or mark or +tele (if the player hasn't read tele)
+        -- TODO: check if teleport other even still exists as a monster-castable spell? idk if that was ever removed from hellwings
+        -- TODO: add a basilisk petrify warning?
 
         for _,entry in ipairs(danger_table) do
             assert(type(entry.conditions) == "table" and type(entry.tier) == "number" and type(entry.reason) == "string")
@@ -999,6 +1029,7 @@ local status = {
 
 function ready()
     if you.turns() == 0 then init_player_tile() end
+    if DEBUG_YOU_STATUS == true then crawl.mpr(you.status() .. " || " .. you.transform()) end
     status:update()
 end
 
