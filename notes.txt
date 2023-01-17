@@ -248,3 +248,60 @@ end
 
 -------
 
+        -- TODO: Dream Sheep never actually cast Dream Dust if the player has clarity,
+        -- *even though* clarity does not strictly make an actor immune to Dream Dust.
+        -- grep _foe_sleep_viable( for details.
+        -- I need to fix this, but player::clarity() is unexposed through clua.
+        -- Reconstructing it independently on the clua side is possible, but it has several conditions,
+        -- and it would be better if a simple clua bind to bool player::clarity() were added.
+        -- Looking into this opened another can of worms re: /other/ l-you.cc clua binds that should be exposed,
+        -- and, just, ugh.
+        -- I don't know if I want to open a crawl PR with the dozens of issues this revealed,
+        -- or if I just want to hack this one instance into my script and move on.
+        -- (To be fair, player_res_torment is another such issue that I've already had to hack into my script, so, yeah.)
+        -- (There was also player_movement_speed that I had cause to hack into ff.rc ...)
+        -- There's also player::undead_or_demonic and player::res_holy_energy, which I've already had to hack into this script...
+
+-------
+
+These bindings need to be added to l-you.cc :
+
+all of the below bindings are in player.cc, as player::thing(),
+but without any corresponding clua bind in l-you.cc.
+
+the bindings listed here are informational binds that are not-trivially-reconstructable through lua;
+player:: binds that reduce to things like a single you.transform() aren't included here as they're not needed.
+[I'm treating this as "does it have >= 2 conditions, and are its conditions non-obvious"]
+
+(I should also double-check to make sure that every effect that displays pips on % is accessible through clua)
+TODO: this
+
+clarity, faith, cloud immunity, repel missiles,
+
+undead_or_demonic, evil, holy,
+nonliving, unbreathing,
+
+res_miasma, res_torment, res_petrify, res_constrict,
+
+no_tele (not sure if this needs to be exposed), 
+
+you.invisible() has an incorrect binding in the clua,
+it only checks you.duration[DUR_INVIS],
+while player::invisible() also checks shadowform and backlit,
+this bind should directly call player::invisible()
+
+is_lifeless_undead,
+
+can_polymorph, can_bleed, can_drink, can_feel_fear
+
+is_nervous (fungusform nearby threatening mons check)
+
+can_potion_heal, 
+
+allies_forbidden
+
+-------
+
+
+
+

@@ -673,6 +673,27 @@ function is_threatening(mons)
     return mons:attitude() < ATT_NEUTRAL
 end
 
+-- Here we reconstruct the Dream Sheep "Dream Dust" success rate, as it's not exposed anywhere in-game.
+local DREAM_SHEEP_CAP = 6
+local DREAM_SHEEP_MAGIC_NUMBER = 25
+function get_dream_dust_success_rate()
+    local sheep = 0
+    local rate = 0
+
+    for _,mons in ipairs(mons_table) do
+        if check(mons, "Dream Dust") then
+            sheep = sheep + 1
+        end
+    end
+
+    if sheep > DREAM_SHEEP_CAP then sheep = DREAM_SHEEP_CAP end
+    if sheep > 0 then
+        rate = 100 * ((sheep - 1) * DREAM_SHEEP_MAGIC_NUMBER + 1) / (sheep * DREAM_SHEEP_MAGIC_NUMBER)
+    end
+
+    return rate
+end
+
 local status = {
     _update_mons = function()
         local LOS = you.los()
@@ -747,8 +768,11 @@ local status = {
              reason = "Stunning Burst (paralyse) and no rElec"} ,
         {conditions = {check(mons, "Paralysis Gaze")},
                tier = 3,
-             reason = "Irresistable Paralysis Gaze (pierces LOF) " .. (mons:status("fully charged") ~= true and "is charging!"
+             reason = "Irresistible Paralysis Gaze (pierces LOF) " .. (mons:status("fully charged") ~= true and "is charging!"
                                                                        or "is ready to fire!!")} ,
+        {conditions = {check(mons, "Dream Dust")},
+               tier = 2,
+             reason = "Irresistible Dream Dust (" .. get_dream_dust_success_rate() .. "%), watch out!"} ,
         {conditions = {check(mons, "Confusion Gaze"), you.willpower() < 3},
                tier = 2,
              reason = "Confusion Gaze and low Will"} ,
@@ -969,6 +993,9 @@ local status = {
         -- TODO: I need to add active status warnings for dangerous player status to this script;
         -- things like petrifying or howl or standing-in-dangerous-cloud or mark or +tele (if the player hasn't read tele)
         -- TODO: check if teleport other even still exists as a monster-castable spell? idk if that was ever removed from hellwings
+        -- TODO: there's a message log warning bug where Crawl is concatenating identical warnings into a single combat log
+        -- message, formatted like "warning: thing x2". This is obvious with Dream Sheep, probably other warnable pack mons too?
+        -- Take a look at this?
 
         for _,entry in ipairs(danger_table) do
             assert(type(entry.conditions) == "table" and type(entry.tier) == "number" and type(entry.reason) == "string")
