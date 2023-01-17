@@ -787,6 +787,9 @@ local status = {
         {conditions = {check_tdesc(mons, "wand of paralysis"), you.willpower() < 3},
                tier = 3,
              reason = "Wand of Paralysis and low Will"} ,
+        {conditions = {check(mons, "Porkalator"), you.willpower() < 3},
+               tier = 2,
+             reason = "Porkalator and low Will, careful"} ,
         -- comparing "distort" instead of "distortion" works against Rift, randarts, and panlord "distorting touch"
         -- TODO: check to see if this catches dancing weapons?
         {conditions = {check_tdesc(mons, "[dD]istort"), you.branch() ~= "Zig"},
