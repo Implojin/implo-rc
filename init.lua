@@ -962,7 +962,7 @@ local status = {
                tier = 3,
              reason = "Bolt of Magma (irresistible ~3d30+ equivalent) and not rF+++, watch out!"} ,
         {conditions = {check_tdesc(mons, "carrying a wand")},
-               tier = 3,
+               tier = 2,
              -- This pattern should match against (charges) and (success%), but I think the game only displays (charges) here
              reason = "carrying a " .. (string.match(mons:target_desc(), "wand of %w+ %(%d+%%?%)") or "unknown/nonexistent wand?")
                                     .. ", careful!"} ,
