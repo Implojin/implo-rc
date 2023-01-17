@@ -1000,9 +1000,6 @@ local status = {
         -- TODO: I need to add active status warnings for dangerous player status to this script;
         -- things like petrifying or howl or standing-in-dangerous-cloud or mark or +tele (if the player hasn't read tele)
         -- TODO: check if teleport other even still exists as a monster-castable spell? idk if that was ever removed from hellwings
-        -- TODO: there's a message log warning bug where Crawl is concatenating identical warnings into a single combat log
-        -- message, formatted like "warning: thing x2". This is obvious with Dream Sheep, probably other warnable pack mons too?
-        -- Take a look at this?
 
         for _,entry in ipairs(danger_table) do
             assert(type(entry.conditions) == "table" and type(entry.tier) == "number" and type(entry.reason) == "string")
