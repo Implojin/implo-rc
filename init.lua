@@ -896,10 +896,17 @@ local status = {
         {conditions = {check(mons, "Polar Vortex"), you.res_cold() < 3},
                tier = 3,
              reason = "Polar Vortex and not rC+++, careful!"} ,
-        -- antaeus, josephina, rime drakes
-        {conditions = {check(mons, "Flash Freeze"), you.res_cold() < 2},
-               tier = 3,
-             reason = "Flash Freeze and not rC++, careful!"} ,
+        -- antaeus (3d29), josephina (3d28), rime drake (3d13)
+        -- TODO: Can I combine these into a single, more generic {damage,resist} pip constructor/check, to reduce this
+        -- to a single call, and generalize the dynamic resist constructor to become usable with generic abilities?
+        {conditions = {check(mons, "Flash Freeze") and check_abil_dam(mons, "Flash Freeze") >= 60, you.res_cold() < 2},
+               tier = 2,
+             reason = "Flash Freeze (" .. (check_abil_xdy(mons, "Flash Freeze") or "")
+                                       .. ") and not rC++, careful!~"} ,
+        {conditions = {check(mons, "Flash Freeze") and check_abil_dam(mons, "Flash Freeze") < 60, you.res_cold() < 1},
+               tier = 2,
+             reason = "Flash Freeze (" .. (check_abil_xdy(mons, "Flash Freeze") or "")
+                                       .. ") and not rC+, careful!"} ,
         -- josephina, wendigo
         {conditions = {check(mons, "Seracfall"), you.res_cold() < 3},
                tier = 3,
