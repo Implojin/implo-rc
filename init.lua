@@ -713,7 +713,8 @@ local status = {
         end
     end,
     -- returns false if a warning did not occur, true if a warning occurred
-    _warn = function(self,threat)
+    _warn = function(self,threat,force_more)
+        if force_more == nil then force_more = true end
         if threat.last_warned ~= nil and threat.last_warned == you.turns() then return false end
 
         local tier = threat.tier
@@ -730,7 +731,7 @@ local status = {
         -- Tier 2+, flash screen. There is no clua binding to manually perform a flash screen.
         -- Here, we have to rely on the rcfile flash_screen_message option, pattern matching our (custom) printed tier messages.
 
-        if tier >= 3 then crawl.more() end
+        if tier >= 3 and force_more then crawl.more() end
 
         if tier >=2 then
             crawl.redraw_screen()
@@ -1043,7 +1044,7 @@ local status = {
     _reissue_warnings = function(self)
         for _,threat in ipairs(current_threats) do
             if threat.tier >= 3 then
-                self:_warn(threat)
+                self:_warn(threat, false)
             end
         end
     end,
