@@ -835,7 +835,7 @@ local status = {
              reason = "Malmutator in LOS"} ,
         -- XXX: I'd prefer to check lof against "Malmutate" here, but it seems like spells.path() only works with player spells?
         {conditions = {check(mons, "Malmutate"), check_lof(mons), you.branch() ~= "Zig"},
-               tier = 3,
+               tier = 2,
              reason = "Malmutator in LOF!"} ,
         {conditions = {mons:name() == "orb of fire", you.res_fire() < 3},
                tier = 3,
