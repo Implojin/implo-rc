@@ -519,6 +519,7 @@ function check_lof(mons, spell)
         end
     end
 
+    -- TODO: this test is buggy with Hep ancestors, because they can be fired through, FIXME
     if not same_coords(path[#path][1], path[#path][2], mons:pos()) then
         if DEBUG_LOF_PATH == true then crawl.mpr("LOF blocked to " .. mons:name() .. "?") end
         return false
@@ -531,7 +532,7 @@ function debug_mpr_current_threats()
     for _,entry in ipairs(current_threats) do
         local pos = {}
         pos1,pos2 = entry[1]:pos()
-        crawl.mpr("name(): " .. entry[1]:name() .. " pos(): " .. pos1 .. "," .. pos2)
+        crawl.mpr("name: " .. entry.name .. " pos(): " .. pos1 .. "," .. pos2)
     end
 end
 
@@ -694,6 +695,8 @@ function get_dream_dust_success_rate()
     return rate
 end
 
+local pending_message_warnings = {}
+
 local status = {
     _update_mons = function()
         local LOS = you.los()
@@ -718,10 +721,10 @@ local status = {
         if tier > 1 then colour = "yellow" end
         if tier > 2 then colour = "lightred" end
 
-        crawl.formatted_mpr("<lightred>Danger: " .. threat[1]:name() .. "</lightred> |T" .. tostring(tier) .. "| " ..
+        crawl.formatted_mpr("<lightred>Danger: " .. threat.name .. "</lightred> |T" .. tostring(tier) .. "| " ..
                             "<" .. colour .. ">Reason: " .. threat.reason .. "</" .. colour .. ">")
         crawl.flush_prev_message()
-        crawl.take_note("Danger: " .. threat[1]:name() .. " |T" .. tostring(tier) .. "| " ..
+        crawl.take_note("Danger: " .. threat.name .. " |T" .. tostring(tier) .. "| " ..
                         "Reason: " .. threat.reason)
 
         -- Tier 2+, flash screen. There is no clua binding to manually perform a flash screen.
@@ -1014,14 +1017,14 @@ local status = {
                 -- if this entry to current_threats matches a known_threats entry, don't warn about it,
                 -- but also delete the matching known_threats entry, so that we can properly warn about duplicate threats.
                 for key,entry in pairs(known_threats) do
-                    if entry[1]:name() == mons:name() and entry.reason == threat.reason then
+                    if entry.name == mons:name() and entry.reason == threat.reason then
                         needs_warn = false
                         table.remove(known_threats, key)
                         break
                     end
                 end
 
-                table.insert(current_threats, {mons, tier = threat.tier, reason = threat.reason, last_warned = nil})
+                table.insert(current_threats, {name = mons:name(), tier = threat.tier, reason = threat.reason, last_warned = nil})
                 if needs_warn then self:_warn(current_threats[#current_threats]) end
             end
         end
@@ -1042,6 +1045,12 @@ local status = {
             if threat.tier >= 3 then
                 self:_warn(threat)
             end
+        end
+    end,
+    _issue_message_log_warnings = function(self)
+        for key,warning in ipairs(pending_message_warnings) do
+            self:_warn(warning)
+            table.remove(pending_message_warnings, key)
         end
     end,
     _maybe_act = function(self)
@@ -1084,12 +1093,24 @@ function ready()
     status:update()
 end
 
+local message_log_threat_table = {
+    {conditions = "into a shaft and drop",
+           tier = 3,
+         reason = "Shafted!"} , }
+
 -- ch_stop_running preempts(?) c_message, so here we track state, and defer acting on it until the next ready().
 -- TODO: check messages for whether the player was shafted / teleported, and if so, stop reissuing autoexplore?
 -- I don't want the script blindly re-issuing actions if the floor situation has changed.
 function c_message(text, channel)
     if string.find(text, "Done exploring.") then
         done_exploring = true
+    end
+
+    for _,threat in ipairs(message_log_threat_table) do
+        if string.find(text, threat.conditions) then
+            table.insert(pending_message_warnings, {name = threat.reason, tier = threat.tier, reason = threat.reason, last_warned = nil})
+            status:_issue_message_log_warnings() 
+       end
     end
 end
 
