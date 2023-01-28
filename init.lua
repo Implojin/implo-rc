@@ -1096,7 +1096,10 @@ end
 local message_log_threat_table = {
     {conditions = "into a shaft and drop",
            tier = 3,
-         reason = "Shafted!"} , }
+         reason = "Shafted!"} ,
+    {conditions = "You are yanked towards",
+           tier = 3,
+         reason = "Malevolent teleportation!"} , }
 
 -- ch_stop_running preempts(?) c_message, so here we track state, and defer acting on it until the next ready().
 -- TODO: check messages for whether the player was shafted / teleported, and if so, stop reissuing autoexplore?
