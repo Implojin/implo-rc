@@ -35,7 +35,7 @@ autofight_stop = 0
 
 # try to prevent movement key tapping deaths due to disabled mores
 # note: you need to force_more for this to work with show_more = false
-hp_warning = 60
+hp_warning = 0
 
 # allow specific force_mores through show_more = false
 force_more_message = 
@@ -696,6 +696,31 @@ function get_dream_dust_success_rate()
 end
 
 local pending_message_warnings = {}
+local pending_player_warnings = {}
+
+local HP_WARN_T2_PERCENT = 60
+local HP_WARN_T3_PERCENT = 25
+
+function construct_hp_warning()
+    local hp,mhp = you.hp()
+    local threat = nil
+    local percent = math.floor(100 * hp / mhp)
+
+    if next(mons_table) ~= nil and percent <= HP_WARN_T2_PERCENT then
+        threat = {name = "Low HP Warning", tier = (percent <= HP_WARN_T3_PERCENT and 3 or 2),
+                  reason = ("" .. percent .. "% HP (" .. hp .. "/" .. mhp .. ")"), last_warned = nil}
+    end
+
+    return threat
+end
+
+function update_hp_warning()
+    local threat = construct_hp_warning()
+
+    if threat ~= nil then
+        table.insert(pending_player_warnings, threat)
+    end
+end
 
 local status = {
     _update_mons = function()
@@ -1061,6 +1086,15 @@ local status = {
             table.remove(pending_message_warnings, key)
         end
     end,
+    _update_player_warnings = function(self)
+        update_hp_warning()
+    end,
+    _issue_player_warnings = function(self)
+        for key,warning in ipairs(pending_player_warnings) do
+            self:_warn(warning)
+            table.remove(pending_player_warnings, key)
+        end
+    end,
     _maybe_act = function(self)
 -- begin action table
         local action_table = {
@@ -1090,6 +1124,8 @@ local status = {
             self:_update_mons()
             self:_update_threats()
             self:_reissue_warnings()
+            self:_update_player_warnings()
+            self:_issue_player_warnings()
             self._last_updated = you.turns()
         end
         self:_maybe_act()
