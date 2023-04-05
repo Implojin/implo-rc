@@ -966,15 +966,13 @@ local status = {
              reason = "Fire Breath (3d40) and not rF+++, watch out!"} ,
         -- 10 mons: orb of fire (3d43), margery (3d33), draconian scorcher (3d26), fire giant (3d26),
         -- deep elf elementalist (3d23), balrug (3d23), azrael (3d20), hell hog (3d20), wizard (3d19), efreet (3d15)
+        -- orb of fire rF3 check is handled once, above, to avoid warning spam
         {conditions = {check(mons, "Fireball"), mons:name() ~= "orb of fire" and mons:name() ~= "Margery", you.res_fire() < 1},
                tier = 2,
              reason = "Fireball and not rF+, careful"} ,
         {conditions = {check(mons, "Fireball"), mons:name() == "Margery", you.res_fire() < 2},
                tier = 3,
              reason = "Fireball (3d33) and not rF++, careful"} ,
-        {conditions = {check(mons, "Fireball"), mons:name() == "orb of fire", you.res_fire() < 3},
-               tier = 3,
-             reason = "Fireball (3d43) and not rF+++, watch out!"} ,
         -- 16 mons: orb of fire (3d40), margery (3d32) !, mara (3d27) (x3 if mara clones...), golden dragon (3d27), asmodeus (3d26),
         -- tengu reaver (3d26), draconian scorcher (3d25), fire giant (3d25), ophan (3d24), balrug (3d23), azrael (3d20),
         -- hell knight (3d18), deep elf fire mage "pyromancer": (3d17), orc sorcerer (3d17), efreet (3d15), maggie (3d13)
@@ -985,9 +983,6 @@ local status = {
         {conditions = {check(mons, "Bolt of Fire"), mons:name() == "Margery" or mons:name() == "Mara", you.res_fire() < 2},
                tier = 3,
              reason = "Bolt of Fire " .. (mons:name() == "Margery" and "(3d32)" or "(3d27)") .. " and not rF++, careful"} ,
-        {conditions = {check(mons, "Bolt of Fire"), mons:name() == "orb of fire", you.res_fire() < 3},
-               tier = 3,
-             reason = "Bolt of Fire (3d40) and not rF+++, watch out!"} ,
         -- 5 mons: draconian scorcher (3d25), roxanne (3d23), salamander mystic (3d18), ogre mage (3d18), molten gargoyle (3d15)
         {conditions = {check(mons, "Bolt of Magma"), string.find(mons:name(), "draconian scorcher") == nil
                                                      and mons:name() ~= "Roxanne", you.res_fire() < 1},
@@ -1018,9 +1013,6 @@ local status = {
             table.insert(danger_table, entry)
         end
 
-        -- TODO: maybe remove the base OOF name check, since its spells are now accounted for separately
-        -- alternate approach: remove the OOF-specific bolt of fire and fireball checks, since they're spamming twice per OOF,
-        -- and instead just rely on the single old-style oof rF3 warning
         -- TODO: adjust the IMMINENT DEATH checks to account for player resistance, right now they work off of base damage only,
         -- which fires warnings pretty much instantly vs. d40s / glaciate
         -- TODO: same deal as above with the 50% MHP warnings
