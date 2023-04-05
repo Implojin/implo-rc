@@ -4,7 +4,7 @@ travel_delay = -1
 explore_delay = -1
 rest_delay = -1
 # try to increase flash_screen_message visibility with use_animations == false
-view_delay = 250
+view_delay = 0
 show_travel_trail = true
 use_animations = false
 
@@ -22,7 +22,7 @@ travel_open_doors = avoid
 # It's only rarely desirable in realtime games, when autofighting groups of trivial mons by holding Tab.
 # Setting this too low will cause unintended multi-taps, setting this too high will cause holding Tab to take longer to trigger.
 # It's better to err on the side of setting this too high. 
-tile_key_repeat_delay = 150
+tile_key_repeat_delay = 50
 
 # try to force the game to redraw at minimum ~20fps, to help the player contextualize auto-handler actions
 # redrawing faster than this is probably excessive for online play, even though automated actions can and will occur much faster
@@ -760,7 +760,7 @@ local status = {
 
         if tier >=2 then
             crawl.redraw_screen()
-            crawl.delay(250)
+            crawl.delay(200)
         end
 
         threat.last_warned = you.turns()
