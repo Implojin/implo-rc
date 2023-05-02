@@ -6,7 +6,7 @@ rest_delay = -1
 # try to increase flash_screen_message visibility with use_animations == false
 view_delay = 0
 show_travel_trail = true
-use_animations = false
+use_animations = 
 
 # megazigging
 show_more = false
