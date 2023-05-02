@@ -33,13 +33,12 @@ tile_runrest_rate = 50
 # prevent autofight from changing behavior at arbitrary HP threshold
 autofight_stop = 0
 
-# try to prevent movement key tapping deaths due to disabled mores
-# note: you need to force_more for this to work with show_more = false
+# We manually issue HP warnings below, and do not use the game's LOW HITPOINT WARNING
 hp_warning = 0
 
-# allow specific force_mores through show_more = false
+# Here we blank out the default force_mores, but then re-add some of them,
+# to enable only our specific force_mores through show_more = false
 force_more_message = 
-force_more_message += LOW HITPOINT WARNING
 
 # since we're clearing default force_mores, re-enable portal, zot clock,
 # and disto announcements, as not to miss them
