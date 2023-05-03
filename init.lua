@@ -829,6 +829,13 @@ local status = {
         {conditions = {check_tdesc(mons, "[dD]istort"), you.branch() ~= "Zig"},
                tier = 3,
              reason = "Distortion weapon!"} ,
+        -- elec weapons: ego, randarts + glaive of the guard + eos + storm bow, arc blade
+        {conditions = {check_tdesc(mons, "of electrocution")
+                       or check_tdesc(mons, "{elec")
+                       or check_tdesc(mons, "arc blade"),
+                       you.res_shock() < 1, you.branch() ~= "Zig"},
+               tier = 2,
+             reason = "Electrocution weapon and no rElec!"} ,
         {conditions = {check_tdesc(mons, "quivering poison"), you.res_poison() < 1, you.branch() ~= "Zig"},
                tier = 2,
              reason = "Quivering poison darts and no rPois, careful!"} ,
