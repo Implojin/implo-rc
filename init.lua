@@ -409,6 +409,9 @@ function check_abil_dam(mons, ability)
     return damage
 end
 
+-- temporarily disable the below check, it's too spammy and inaccurate without checking player resists per-beam
+local ele_resist_check_is_written = false
+
 -- Check whether a monster's abilities deal enough damage to be dangerous to the player.
 -- If it's dangerous, return a danger_entries table, containing conditions and reasons for each danger.
 -- @return danger_entries { {conditions = table, tier = number, reason = string}, ... }
@@ -444,7 +447,7 @@ function check_generic_damage(mons)
                     entry = {conditions = {true}, tier = 2, reason = ability .. " deals more than 50% MHP!"}
                     table.insert(danger_entries, entry)
                 end
-                if damage > hp then
+                if damage > hp and ele_resist_check_is_written then
                     entry = {conditions = {true}, tier = 3, reason = "IMMINENT DEATH: " .. ability .. " deals " .. tostring(damage)
                                                                      .. " damage, you have " .. tostring(hp) .. " HP!!"}
                     table.insert(danger_entries, entry)
