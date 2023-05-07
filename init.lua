@@ -1007,14 +1007,11 @@ local status = {
              reason = "carrying a " .. (string.match(mons:target_desc(), "wand of %w+ %(%d+%%?%)") or "unknown/nonexistent wand?")
                                     .. ", careful!"} ,
         -- damnation checks
-        {conditions = {check(mons, "Hurl Damnation"), check_lof(mons) ~= true},
+        {conditions = {check(mons, "Hurl Damnation")},
                tier = 2,
              reason = "Damnation in LOS, careful!"} ,
-        {conditions = {check(mons, "Hurl Damnation"), check_lof(mons) == true},
-               tier = 3,
-             reason = "Damnation in LOF, watch out!"} ,
         {conditions = {check(mons, "Call Down Damnation")},
-               tier = 3,
+               tier = 2,
              reason = "Damnation (smite) in LOS, watch out!"} , }
 
         local generic_damage_entries = check_generic_damage(mons)
