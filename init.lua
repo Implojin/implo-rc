@@ -74,7 +74,8 @@ flash_screen_message += T2
 flash_screen_message += T3
 
 # tiles-specific options
-tile_show_threat_levels = tough, nasty
+tile_show_threat_levels = tough, nasty, unusual
+
 cloud_status = true
 
 # does this have a bad interaction with view_delay ???
