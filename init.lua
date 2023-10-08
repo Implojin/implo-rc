@@ -805,10 +805,13 @@ local status = {
         {conditions = {check_tdesc(mons, "quivering datura"), you.branch() ~= "Zig"},
                tier = 3,
              reason = "Quivering datura, careful!"} ,
+        {conditions = {check_tdesc(mons, "quivering dispersal"), you.branch() ~= "Zig"},
+               tier = 3,
+             reason = "Quivering dispersal, careful!"} ,
         {conditions = {check_tdesc(mons, "throwing net"), you.branch() ~= "Zig"},
                tier = 3,
              reason = "Quivering throwing nets, watch out!"} ,
-        -- TODO: branded javelins (silver), branded boomerangs (silver, dispersal), branded large rocks (chuck)
+        -- TODO: branded javelins (silver), branded large rocks (chuck)
         {conditions = {check_tdesc(mons, "large rock"), you.branch() ~= "Zig"},
                tier = 2,
              reason = "Quivering large rocks, watch out!!"} ,
