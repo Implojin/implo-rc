@@ -716,7 +716,7 @@ local status = {
 
         if tier >=2 then
             crawl.redraw_screen()
-            crawl.delay(200)
+            crawl.delay(150)
         end
 
         threat.last_warned = you.turns()
