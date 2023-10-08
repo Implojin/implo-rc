@@ -703,17 +703,19 @@ local pending_player_warnings = {}
 
 local HP_WARN_T2_PERCENT = 60
 local HP_WARN_T3_PERCENT = 25
+local LAST_HP = math.huge
 
 function construct_hp_warning()
     local hp,mhp = you.hp()
     local threat = nil
     local percent = math.floor(100 * hp / mhp)
 
-    if next(mons_table) ~= nil and percent <= HP_WARN_T2_PERCENT then
+    if next(mons_table) ~= nil and percent <= HP_WARN_T2_PERCENT and hp < LAST_HP then
         threat = {name = "Low HP Warning", tier = (percent <= HP_WARN_T3_PERCENT and 3 or 2),
                   reason = ("" .. percent .. "% HP (" .. hp .. "/" .. mhp .. ")"), last_warned = nil}
     end
 
+    LAST_HP = hp
     return threat
 end
 
