@@ -151,8 +151,6 @@ tile_shield_offsets = 0,0
 : "tile:mons_vashnia", }
 
 : octopode_tiles = {
-:-- "tile:mons_cigotuvis_monster",
-:-- "tile:TRAN_STORM_OCTOPODE",
 : "normal", }
 
 : ogre_tiles = {
