@@ -17,12 +17,7 @@ travel_key_stop = false
 # re-set travel_open_doors = false, this was set in my old rc but removed -.-
 travel_open_doors = avoid
 
-# This setting affects the time needed to hold down a key, before the game registers it as repeat inputs.
-# We basically never want this to happen.
-# It's only rarely desirable in realtime games, when autofighting groups of trivial mons by holding Tab.
-# Setting this too low will cause unintended multi-taps, setting this too high will cause holding Tab to take longer to trigger.
-# It's better to err on the side of setting this too high. 
-tile_key_repeat_delay = 50
+tile_key_repeat_delay = 150
 
 # try to force the game to redraw at minimum ~20fps, to help the player contextualize auto-handler actions
 # redrawing faster than this is probably excessive for online play, even though automated actions can and will occur much faster
