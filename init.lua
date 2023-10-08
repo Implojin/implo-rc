@@ -52,24 +52,9 @@ cloud_status = true
 tile_weapon_offsets = 0,0
 tile_shield_offsets = 0,0
 
-# TODO: move all of these global player tiles into the species-specific tables,
-# then get rid of this old table
-: player_tiles_table = {
-: "tile:mons_polymoth",
-: "tile:mons_dimme",
-: "tile:mons_hell_wizard_50",
-: "tile:mons_hellbinder",
-: "tile:mons_master_elementalist",
-: "tile:mons_dryad",
-: "tile:mons_eleionoma",
-:-- "tile:mons_tiamat_mottled",
-: "tile:mons_holy_swine", }
-:
-: if c_persist.PLAYER_TILE == nil then
-:    c_persist.PLAYER_TILE = player_tiles_table[crawl.random2(#player_tiles_table) + 1]
+: if c_persist.PLAYER_TILE ~= nil then
+:    crawl.setopt("tile_player_tile = " .. c_persist.PLAYER_TILE)
 : end
-:
-: crawl.setopt("tile_player_tile = " .. c_persist.PLAYER_TILE)
 
 # Below we setup some custom player tile Lua, based on species
 #
@@ -90,9 +75,8 @@ tile_shield_offsets = 0,0
 : "tile:mons_mlioglotl", }
 
 : demonspawn_tiles = {
+: "tile:mons_polymoth",
 : "tile:mons_killer_klown_3",
-: "tile:mons_gloorx_vloq",
-: "tile:mons_lom_lobon",
 : "tile:mons_executioner", }
 
 : djinni_tiles = {
@@ -131,12 +115,18 @@ tile_shield_offsets = 0,0
 : "tile:mons_orc_warlord", }
 
 : human_tiles = {
+: "tile:mons_dimme",
+: "tile:mons_eleionoma",
+: "tile:mons_hell_wizard_50",
+: "tile:mons_hellbinder",
+: "tile:mons_master_elementalist",
 : "tile:mons_ancestor_hexer",
 : "tile:mons_drowned_soul",
 : "tile:mons_erica_swordless",
 : "tile:mons_louise",
 : "tile:mons_maggie",
-: "tile:mons_margery", }
+: "tile:mons_margery",
+: "tile:mons_holy_swine", }
 
 : kobold_tiles = {
 : "tile:tran_shadow",
@@ -197,6 +187,7 @@ tile_shield_offsets = 0,0
 : "tile:mons_jiangshi", }
 
 : vine_stalker_tiles = {
+: "tile:mons_dryad",
 : "tile:mons_vine_stalker",
 : "tile:mons_briar_patch",
 : "tile:mons_thorn_hunter", }
