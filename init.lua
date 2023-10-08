@@ -36,39 +36,6 @@ autofight_stop = 0
 # We manually issue HP warnings below, and do not use the game's LOW HITPOINT WARNING
 hp_warning = 0
 
-# Here we blank out the default force_mores, but then re-add some of them,
-# to enable only our specific force_mores through show_more = false
-force_more_message = 
-
-# since we're clearing default force_mores, re-enable portal, zot clock,
-# and disto announcements, as not to miss them
-
-# default force_mores can be found at:
-# https://github.com/crawl/crawl/blob/master/crawl-ref/source/dat/defaults/messages.txt#L89
-# (some of these might be helpful to re-add later)
-
-## Zot is coming!
-force_more_message += You have lingered too long
-force_more_message += Zot draws nearer
-force_more_message += Zot has nearly found you
-force_more_message += Zot already knows
-force_more_message += Zot's attention fixes on you
-# Announcements of timed portal vaults:
-force_more_message += interdimensional caravan
-force_more_message += distant snort
-force_more_message += roar of battle
-force_more_message += wave of frost
-force_more_message += hiss of flowing sand
-force_more_message += sound of rushing water
-force_more_message += oppressive heat about you
-force_more_message += crackle of arcane power
-force_more_message += hear a distant wind
-## Dangerous weapons
-#force_more_message += is wielding.*distortion
-## dancing weapons require special handling...
-#force_more_message += there is a.*distortion
-#force_more_message += of distortion comes into view
-
 # flash screen for our scripted danger tier warnings above tier 2
 flash_screen_message += T2
 flash_screen_message += T3
