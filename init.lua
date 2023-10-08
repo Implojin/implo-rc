@@ -40,9 +40,6 @@ tile_show_threat_levels = tough, nasty, unusual
 
 cloud_status = true
 
-# does this have a bad interaction with view_delay ???
-# tile_realtime_anim = true
-
 # player tile things
 tile_weapon_offsets = 0,0
 tile_shield_offsets = 0,0
