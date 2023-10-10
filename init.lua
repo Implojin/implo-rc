@@ -14,7 +14,7 @@ show_more = false
 # try to prevent autopick from being interrupted during zig cleanup?
 travel_key_stop = false
 
-# re-set travel_open_doors = false, this was set in my old rc but removed -.-
+# we dynamically re-set travel_open_doors in multiple places below
 travel_open_doors = avoid
 
 tile_key_repeat_delay = 150
