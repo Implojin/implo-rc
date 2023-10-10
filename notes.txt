@@ -173,43 +173,10 @@ end
 
 -------
 
-    -- if TAG_MAJOR_VERSION == 34 || player_equip_unrand(UNRAND_ETERNAL_TORMENT)
-    local item = nil
-    item = items.equipped_at("Helmet")
-    if item ~= nil and item.name():find("Eternal Torment") then
-        return true
-    end
-
--------
-
-    -- we do not recreate logic for player_equip_unrand(UNRAND_ETERNAL_TORMENT) here, as it has not generated since 2015
-
--------
-
     -- Note: Monsters do not target Alive player Vp with DU Range, even though the player *would* take damage from this.
     -- Its targeter in mon-cast.cc, case SPELL_DISPEL_UNDEAD_RANGE:, checks (foe->holiness() & MH_UNDEAD), which exempts Alive Vp.
     -- We return false for Alive Vp here because they are not in danger from DU in practice, at present.
     -- Undeadhunter uses the same holiness check exempting living Vp, so writing it like this seems to be okay in practice?
-
--------
-
-        {conditions = {check(mons, "Fireball"), you.res_fire() < 1},
-             reason = "Fireball and not rF+, careful"} ,
-        {conditions = {check(mons, "Fireball", 60), you.res_fire() < 2},
-             reason = "Fireball (3d20+) and not rF++, careful"} ,
-        {conditions = {check(mons, "Fireball", 120), you.res_fire() < 3},
-             reason = "Fireball (3d40+) and not rF+++, watch out!"} , }
-
--------
-
-        -- 10 mons: orb of fire (3d43), margery (3d33), draconian scorcher (3d26), fire giant (3d26),
-        -- deep elf elementalist (3d23), balrug (3d23), azrael (3d20), hell hog (3d20), wizard (3d19), efreet (3d15)
-        {conditions = {check(mons, "Fireball"), mons:name() ~= "orb of fire" and mons:name() ~= "Margery", you.res_fire() < 1},
-             reason = "Fireball and not rF+, careful"} ,
-        {conditions = {check(mons, "Fireball"), mons:name() == "Margery", you.res_fire() < 2},
-             reason = "Fireball (3d33) and not rF++, careful"} ,
-        {conditions = {check(mons, "Fireball"), mons:name() == "orb of fire", you.res_fire() < 3},
-             reason = "Fireball (3d43) and not rF+++, watch out!"} , }
 
 -------
 
@@ -302,6 +269,29 @@ allies_forbidden
 
 -------
 
+TODOs:
 
+continue to cleanup spammy/excessive T3 warnings
 
+downgrade warnings that now match unusual item highlights to T2 warnings?
+
+either pull in the auto-identify code from ff.rc, or re-write it?
+saving time of manually identifying stuff would be nice.
+
+add some code to autopick aux slots,
+it's a pain to constantly ctrl+f aux things
+
+add some code to autopick the usual throwables and evokables at game start
+
+set default_manual_training = true ?
+
+add some code to autodrop stones + disable autopick for stones past a certain point
+
+autodrop + disable autopick for the usual consumables I don't use:
+noise
+immolation
+torment
+degeneration
+attraction
+++ others I'm forgetting?
 
