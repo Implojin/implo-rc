@@ -358,62 +358,7 @@ function check_abil_dam(mons, ability)
     return damage
 end
 
--- temporarily disable the below check, it's too spammy and inaccurate without checking player resists per-beam
-local ele_resist_check_is_written = false
-
--- Check whether a monster's abilities deal enough damage to be dangerous to the player.
--- If it's dangerous, return a danger_entries table, containing conditions and reasons for each danger.
--- @return danger_entries { {conditions = table, tier = number, reason = string}, ... }
-function check_generic_damage(mons)
-    local abilities = {}
-    local books = nil
-    books = mons:spells()
-    if books ~= nil then
-        for _,book in ipairs(books) do
-            for _,spell in ipairs(book) do
-                table.insert(abilities, spell)
-            end
-        end
-    end
-
-    local hp,mhp = you.hp()
-    local damage = nil
-    local entry = {}
-    local danger_entries = {}
-
-    if next(abilities) ~= nil then
-        for _,ability in ipairs(abilities) do
-            damage = nil
-            -- XXX: serpent of hell has an issue here: its abilities mostly dont show up in mons:spells() ???
-            -- all that shows up here are "gehenna serpent of hell breath" and "Summon Dragon"
-            -- It looks like those are its only two abilities in mon-spell.h MST_SERPENT_OF_HELL_GEH ,
-            -- but it has several other abils in-game (these are probably coded similarly to draconian breath abils or something?
-            -- TODO: look into *this*.
-            damage = check_abil_dam(mons, ability)
-            if damage ~= nil then
-                entry = {}
-                if damage / mhp >= 0.5 then
-                    entry = {conditions = {true}, tier = 2, reason = ability .. " deals more than 50% MHP!"}
-                    table.insert(danger_entries, entry)
-                end
-                if damage > hp and ele_resist_check_is_written then
-                    entry = {conditions = {true}, tier = 3, reason = "IMMINENT DEATH: " .. ability .. " deals " .. tostring(damage)
-                                                                     .. " damage, you have " .. tostring(hp) .. " HP!!"}
-                    table.insert(danger_entries, entry)
-                end
-            end
-        end
-    end
-
-    -- TODO: warn if (total highest damage of all onscreen mons) >= (current HP)?
-    -- (this will require doing it from outside of this function)
-
-    for _,entry in ipairs(danger_entries) do
-        assert(type(entry.conditions) == "table" and type(entry.tier) == "number" and type(entry.reason) == "string")
-    end
-    return danger_entries
-end
-
+-- XXX: This function is currently unused?
 -- Check if a given monster ability has a (percentage) value listed in the monster description.
 -- Returns "percentage" as a string if it exists, otherwise nil.
 -- @param mons mons
@@ -834,37 +779,19 @@ local status = {
         {conditions = {check_rare_ood(mons)},
                tier = 2,
              reason = "OOD monster, careful!"} ,
-        {conditions = {check(mons, "Creeping Frost"), you.res_cold() < 1},
-               tier = 2,
-             reason = "Creeping Frost and no rC"} ,
-        -- Most major rElec mons have Lightning Bolt:
-        -- This covers electric golems, titans, storm dragons, antaeus, multiple uniques;
-        -- also many smaller mons, inc. annihilators, air mages.
-        {conditions = {check(mons, "Lightning Bolt"), you.res_shock() < 1},
-               tier = 2,
-             reason = "Lightning Bolt and no rElec"} ,
-        -- Chain Lightning only exists on Nikola at present, but this check is here in case some dev gets creative
-        {conditions = {check(mons, "Chain Lightning"), you.res_shock() < 1},
-               tier = 3,
-             reason = "Chain Lightning and no rElec"} ,
+
         {conditions = {mons:name() == "Nikola", you.res_shock() < 1},
                tier = 3,
              reason = "Nikola and no rElec"} ,
         {conditions = {mons:name() == "Nikola", check_tdesc(mons, "[sS]ilenced") ~= true and mons:status("waterlogged") ~= true},
                tier = 3,
              reason = "Nikola in LOS and not silenced or waterlogged"} ,
-        -- shock serpents, electric eels, lightning spires
-        {conditions = {check(mons, "Electrical Bolt"), you.res_shock() < 1},
-               tier = 2,
-             reason = "Electrical Bolt and no rElec"} ,
-        -- lom lobon
-        {conditions = {check(mons, "Conjure Ball Lightning"), you.res_shock() < 1},
-               tier = 3,
-             reason = "Conjure Ball Lightning and no rElec"} ,
+
         -- ironbound thunderhulks, lodul
         {conditions = {check(mons, "Call Down Lightning"), you.res_shock() < 1},
                tier = 3,
              reason = "Call Down Lightning and no rElec"} ,
+
         {conditions = {string.find(mons:name(), "[sS]imulacrum") ~= nil, you.res_cold() < 1},
                tier = 2,
              reason = "simulacrum and no rC, careful"} ,
@@ -872,39 +799,14 @@ local status = {
                        you.res_cold() < 1},
                tier = 3,
              reason = mons:speed_description() .. " simulacrum and no rC, watch out!!"} ,
-        {conditions = {check(mons, "Bolt of Cold"), you.res_cold() < 1},
-               tier = 2,
-             reason = "Bolt of Cold and no rC"} ,
-        {conditions = {check(mons, "Cold Breath"), you.res_cold() < 1},
-               tier = 2,
-             reason = "Cold Breath and no rC"} ,
-        {conditions = {check(mons, "Glaciate"), you.res_cold() < 3},
-               tier = 3,
-             reason = "Glaciate and not rC+++, watch out!"} ,
-        {conditions = {check(mons, "Polar Vortex"), you.res_cold() < 3},
-               tier = 3,
-             reason = "Polar Vortex and not rC+++, careful!"} ,
-        -- antaeus (3d29), josephina (3d28), rime drake (3d13)
-        -- TODO: Can I combine these into a single, more generic {damage,resist} pip constructor/check, to reduce this
-        -- to a single call, and generalize the dynamic resist constructor to become usable with generic abilities?
-        {conditions = {check(mons, "Flash Freeze") and check_abil_dam(mons, "Flash Freeze") >= 60, you.res_cold() < 2},
-               tier = 2,
-             reason = "Flash Freeze (" .. (check_abil_xdy(mons, "Flash Freeze") or "")
-                                       .. ") and not rC++, careful!~"} ,
-        {conditions = {check(mons, "Flash Freeze") and check_abil_dam(mons, "Flash Freeze") < 60, you.res_cold() < 1},
-               tier = 2,
-             reason = "Flash Freeze (" .. (check_abil_xdy(mons, "Flash Freeze") or "")
-                                       .. ") and not rC+, careful!"} ,
-        -- josephina, wendigo
-        {conditions = {check(mons, "Seracfall"), you.res_cold() < 3},
-               tier = 3,
-             reason = "Seracfall and not rC+++, careful!"} ,
+
         {conditions = {check(mons, "Doom Howl"), mons:is("ready_to_howl"), you.branch() ~= "Zig"},
                tier = 3,
              reason = "Doom Howl in LOS, hex it or something"} ,
         {conditions = {check(mons, "Symbol of Torment"), you_res_torment() ~= true},
                tier = 3,
              reason = "Torment and not torment immune!"} ,
+
         {conditions = {check(mons, "Dispel Undead Range"), you_are_undead(true) == true},
                tier = 3,
              reason = "Dispel Undead in LOS while undead!"} ,
@@ -914,47 +816,7 @@ local status = {
         {conditions = {check_tdesc(mons, "holy wrath"), you_are_unholy() == true},
                tier = 3,
              reason = "wielding holy wrath while unholy, watch out!!"} ,
-        -- xtahua (3d40)
-        {conditions = {check(mons, "Searing Breath"), you.res_fire() < 3},
-               tier = 3,
-             reason = "Searing Breath (3d40) and not rF+++, watch out!"} ,
-        -- hellephant (3d40), fire dragon (3d24), lindwurm (3d18), hell hound (3d10)
-        -- TODO: maybe dynamically check ability descriptors for something like '3d40',
-        -- to get rid of the hardcoded hellephant check here?
-        {conditions = {check(mons, "Fire Breath"), mons:name() ~= "hellephant", you.res_fire() < 1},
-               tier = 2,
-             reason = "Fire Breath and not rF+, careful"} ,
-        {conditions = {check(mons, "Fire Breath"), mons:name() == "hellephant", you.res_fire() < 3},
-               tier = 3,
-             reason = "Fire Breath (3d40) and not rF+++, watch out!"} ,
-        -- 10 mons: orb of fire (3d43), margery (3d33), draconian scorcher (3d26), fire giant (3d26),
-        -- deep elf elementalist (3d23), balrug (3d23), azrael (3d20), hell hog (3d20), wizard (3d19), efreet (3d15)
-        -- orb of fire rF3 check is handled once, above, to avoid warning spam
-        {conditions = {check(mons, "Fireball"), mons:name() ~= "orb of fire" and mons:name() ~= "Margery", you.res_fire() < 1},
-               tier = 2,
-             reason = "Fireball and not rF+, careful"} ,
-        {conditions = {check(mons, "Fireball"), mons:name() == "Margery", you.res_fire() < 2},
-               tier = 3,
-             reason = "Fireball (3d33) and not rF++, careful"} ,
-        -- 16 mons: orb of fire (3d40), margery (3d32) !, mara (3d27) (x3 if mara clones...), golden dragon (3d27), asmodeus (3d26),
-        -- tengu reaver (3d26), draconian scorcher (3d25), fire giant (3d25), ophan (3d24), balrug (3d23), azrael (3d20),
-        -- hell knight (3d18), deep elf fire mage "pyromancer": (3d17), orc sorcerer (3d17), efreet (3d15), maggie (3d13)
-        {conditions = {check(mons, "Bolt of Fire"), mons:name() ~= "orb of fire" and mons:name() ~= "Margery"
-                                                    and mons:name() ~= "Mara", you.res_fire() < 1},
-               tier = 2,
-             reason = "Bolt of Fire and not rF+, careful"} ,
-        {conditions = {check(mons, "Bolt of Fire"), mons:name() == "Margery" or mons:name() == "Mara", you.res_fire() < 2},
-               tier = 3,
-             reason = "Bolt of Fire " .. (mons:name() == "Margery" and "(3d32)" or "(3d27)") .. " and not rF++, careful"} ,
-        -- 5 mons: draconian scorcher (3d25), roxanne (3d23), salamander mystic (3d18), ogre mage (3d18), molten gargoyle (3d15)
-        {conditions = {check(mons, "Bolt of Magma"), string.find(mons:name(), "draconian scorcher") == nil
-                                                     and mons:name() ~= "Roxanne", you.res_fire() < 1},
-               tier = 2,
-             reason = "Bolt of Magma and not rF+, careful"} ,
-        {conditions = {check(mons, "Bolt of Magma"), string.find(mons:name(), "draconian scorcher") ~= nil
-                                                     or mons:name() == "Roxanne" , you.res_fire() < 3},
-               tier = 3,
-             reason = "Bolt of Magma (irresistible ~3d30+ equivalent) and not rF+++, watch out!"} ,
+
         {conditions = {check_tdesc(mons, "carrying a wand")},
                tier = 2,
              reason = "carrying a " .. (string.match(mons:target_desc(), "wand of %w+") or "unknown/nonexistent wand?")
@@ -967,20 +829,10 @@ local status = {
                tier = 2,
              reason = "Damnation (smite) in LOS, watch out!"} , }
 
-        local generic_damage_entries = check_generic_damage(mons)
-        for _,entry in ipairs(generic_damage_entries) do
-            table.insert(danger_table, entry)
-        end
-
-        -- TODO: adjust the IMMINENT DEATH checks to account for player resistance, right now they work off of base damage only,
-        -- which fires warnings pretty much instantly vs. d40s / glaciate
-        -- TODO: same deal as above with the 50% MHP warnings
         -- TODO: handle radroach irradiate
         -- TODO: handle ophan "Holy Flames" vs. unholy/undead player check
         -- TODO: handle revenant ghostly fireball (rN check)
         -- TODO: generic "mons carrying randart/unrand check"
-        -- TODO: something like "warning: min TTL < 1 turn!!", "warning: min TTL < 2 turns!",
-        -- "avg TTL < 3 turns", etc.; compare against total known onscreen damage values for this
         -- TODO: handle Spit Acid and no rCorr
         -- TODO: handle Corrosive Bolt and no rCorr
         -- TODO: look into which other rCorr abilities should be warned
