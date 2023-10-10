@@ -987,8 +987,7 @@ local status = {
         -- TODO: "if it's unique, and asleep, and at abs(maxlos) from 0,0", auto set an exclude
         -- maybe do the same thing if it's OOD? or tripping any huge damage / rF+++ flags?
         -- TODO: I need to add active status warnings for dangerous player status to this script;
-        -- things like petrifying or howl or standing-in-dangerous-cloud or mark or +tele (if the player hasn't read tele)
-        -- TODO: check if teleport other even still exists as a monster-castable spell? idk if that was ever removed from hellwings
+        -- things like petrifying or howl or standing-in-dangerous-cloud or mark
 
         for _,entry in ipairs(danger_table) do
             assert(type(entry.conditions) == "table" and type(entry.tier) == "number" and type(entry.reason) == "string")
