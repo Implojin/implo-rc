@@ -498,7 +498,7 @@ end
 -- @return bool
 function you_are_undead(exempt_living_vp)
     assert(type(exempt_living_vp) == "boolean")
-    -- if (form == transformation::lich)
+    -- if (form == transformation::death)
     local transform = you.transform()
     if transform == "death" then return true end
     -- return species::undead_type(species);
