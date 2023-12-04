@@ -468,7 +468,7 @@ function you_res_torment()
     -- this appears to be MR_RES_NEG, 3 in form-data.h
     -- notably, this excludes statue form, as that only provides MR_RES_NEG 1
     local transform = you.transform()
-    if transform == "lich" or transform == "wisp" or transform == "fungus" or transform == "shadow" then
+    if transform == "death" or transform == "wisp" or transform == "fungus" or transform == "shadow" then
         return true
     end
     -- || you.has_mutation(MUT_VAMPIRISM) && !you.vampire_alive
@@ -500,7 +500,7 @@ function you_are_undead(exempt_living_vp)
     assert(type(exempt_living_vp) == "boolean")
     -- if (form == transformation::lich)
     local transform = you.transform()
-    if transform == "lich" then return true end
+    if transform == "death" then return true end
     -- return species::undead_type(species);
     -- it looks like this ultimately returns the undead_type in the species yamls, after a few indirect calls
     -- ghoul and mummy are US_UNDEAD, vampire is US_SEMI_UNDEAD, grep "undead_type" didn't find any others here.
