@@ -980,11 +980,13 @@ function check_adjacent_feat(string, ignore_excluded)
     for i = -1,1 do
         for j = -1,1 do
             feature = view.feature_at(i,j)
-            -- XXX: there's a logic error here? it's returning immediately, not checking any other tiles,
-            -- if it finds *one* that's excluded. I need to flip the tests and only return true from within this for do
-            -- TODO: FIXME
-            if ignore_excluded == true and travel.is_excluded(i,j) == true then return false end
-            if feature == string then return true end
+            if feature == string then
+                if ignore_excluded == true and travel.is_excluded(i,j) == true then
+                    -- do nothing, continue the loop
+                else
+                    return true
+                end
+            end
         end
     end
     return false
