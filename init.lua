@@ -649,8 +649,6 @@ local status = {
         crawl.formatted_mpr("<lightred>Danger: " .. threat.name .. "</lightred> |T" .. tostring(tier) .. "| " ..
                             "<" .. colour .. ">Reason: " .. threat.reason .. "</" .. colour .. ">")
         crawl.flush_prev_message()
-        crawl.take_note("Danger: " .. threat.name .. " |T" .. tostring(tier) .. "| " ..
-                        "Reason: " .. threat.reason)
 
         -- Tier 2+, flash screen. There is no clua binding to manually perform a flash screen.
         -- Here, we have to rely on the rcfile flash_screen_message option, pattern matching our (custom) printed tier messages.
