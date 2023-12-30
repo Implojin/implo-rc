@@ -8,6 +8,8 @@ show_travel_trail = true
 use_animations = 
 
 prompt_menu = false
+more_gem_info = true
+always_show_gems = true
 
 # megazigging
 show_more = false
