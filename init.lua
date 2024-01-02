@@ -719,6 +719,9 @@ local status = {
         {conditions = {check(mons, "Slow") and (check_abil_pct(mons, "Slow") > 5 or false)},
                tier = 2,
              reason = "Slow " .. (check_abil_pct(mons, "Slow") or "buggy") .. "%, equip more Will?"} ,
+        {conditions = {check(mons, "Sentinel's Mark") and (check_abil_pct(mons, "Sentinel's Mark") > 5 or false)},
+               tier = 2,
+             reason = "Sentinel's Mark " .. (check_abil_pct(mons, "Sentinel's Mark") or "buggy") .. "%, equip more Will?"} ,
         -- comparing "distort" instead of "distortion" works against Rift, randarts, and panlord "distorting touch"
         -- TODO: check to see if this catches dancing weapons?
         {conditions = {check_tdesc(mons, "[dD]istort"), you.branch() ~= "Zig"},
