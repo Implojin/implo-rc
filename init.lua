@@ -361,7 +361,6 @@ function check_abil_dam(mons, ability)
     return damage
 end
 
--- XXX: This function is currently unused?
 -- Check if a given monster ability has a (percentage) value listed in the monster description.
 -- Returns "percentage" as a string if it exists, otherwise nil.
 -- @param mons mons
@@ -376,12 +375,8 @@ function check_abil_pct(mons, ability)
         pct = string.match(desc, ability .. "%s+" .. "<?%l*>?" .. "%(%d+%%%)")
         -- if our pattern exists, try to extract "number%"
         if pct ~= nil then
-            pct = string.match(pct, "%d+")
-        end
-    end
-    if DEBUG_ABIL_PCT then
-        if pct ~= nil then
-            crawl.mpr(ability .. "(%): " .. pct)
+            pct = tonumber(string.match(pct, "%d+"))
+            if DEBUG_ABIL_PCT then crawl.mpr(ability .. "(%): " .. pct) end
         end
     end
     return pct
@@ -682,18 +677,17 @@ local status = {
         -- to make the script resilient vs. new mons / new spells / unhandled spells
         -- e.g. string.find(string.lower(m:desc(), "paralys"))
         -- or string.find(m:desc(), "[pP]aralys")   ??
-        -- TODO: compare mons spellpower / success rate (whichever of these is exposed?)
-        -- against player Will for Paralyse/Banish/Petrify, etc.
         local danger_table = {
-        {conditions = {check(mons, "Paralyse"), you.willpower() < 3},
+        -- XXX: refactor this table so i'm not duplicating logic (like check_abil_pct) in the conditions and reason fields
+        {conditions = {check(mons, "Paralyse") and (check_abil_pct(mons, "Paralyse") > 5 or false)},
                tier = 3,
-             reason = "Paralyse and low Will"} ,
-        {conditions = {check(mons, "Petrify"), you.willpower() < 3},
+             reason = "Paralyse " .. (check_abil_pct(mons, "Paralyse") or "buggy") .. "%, equip more Will?"} ,
+        {conditions = {check(mons, "Petrify") and (check_abil_pct(mons, "Petrify") > 5 or false)},
                tier = 3,
-             reason = "Petrify and low Will"} ,
-        {conditions = {check(mons, "Banishment"), you.willpower() < 3},
+             reason = "Petrify " .. (check_abil_pct(mons, "Petrify") or "buggy") .. "%, equip more Will?"} ,
+        {conditions = {check(mons, "Banishment") and (check_abil_pct(mons, "Banishment") > 5 or false)},
                tier = 3,
-             reason = "Banishment and low Will"} ,
+             reason = "Banishment " .. (check_abil_pct(mons, "Banishment") or "buggy") .. "%, equip more Will?"} ,
         {conditions = {check(mons, "Stunning Burst"), you.res_shock() < 1},
                tier = 3,
              reason = "Stunning Burst (paralyse) and no rElec"} ,
@@ -704,9 +698,9 @@ local status = {
         {conditions = {check(mons, "Dream Dust")},
                tier = 2,
              reason = "Irresistible Dream Dust (" .. get_dream_dust_success_rate() .. "%), watch out!"} ,
-        {conditions = {check(mons, "Confusion Gaze"), you.willpower() < 3},
+        {conditions = {check(mons, "Confusion Gaze") and (check_abil_pct(mons, "Confusion Gaze") > 5 or false)},
                tier = 2,
-             reason = "Confusion Gaze and low Will"} ,
+             reason = "Confusion Gaze " .. (check_abil_pct(mons, "Confusion Gaze") or "buggy") .. "%, equip more Will?"} ,
         -- XXX: As far as I can tell, the only way to pull attack flavour (AF_WHATEVER) data is
         -- through string.find(mons:desc()), this doesn't appear to be exposed anywhere else in the clua
         -- TODO: check against the other attack flavour descriptors to see if there are more that should be handled here
@@ -714,16 +708,17 @@ local status = {
         {conditions = {check_desc(mons, "poison and cause paralysis or slowing"), you.res_poison() < 1},
                tier = 3,
              reason = "AF_POISON_PARALYSE and no rPois"} ,
-        -- TODO: Improve this? I'm not sure a static will check is ideal here; does monster HD/XL/whatever factor in?
+        -- TODO: Improve this? mons evoke power is 30 + mons.get_hit_dice(); a static will check isn't accurate here,
+        -- but the game also doesn't currently expose mons evoke success% vs. the player anywhere, as far as I can tell.
         {conditions = {check_tdesc(mons, "wand of paralysis"), you.willpower() < 3},
                tier = 3,
              reason = "Wand of Paralysis and low Will"} ,
-        {conditions = {check(mons, "Porkalator"), you.willpower() < 3},
+        {conditions = {check(mons, "Porkalator") and (check_abil_pct(mons, "Porkalator") > 5 or false)},
                tier = 2,
-             reason = "Porkalator and low Will, careful"} ,
-        {conditions = {check(mons, "Slow"), you.willpower() < 3},
+             reason = "Porkalator " .. (check_abil_pct(mons, "Porkalator") or "buggy") .. "%, equip more Will?"} ,
+        {conditions = {check(mons, "Slow") and (check_abil_pct(mons, "Slow") > 5 or false)},
                tier = 2,
-             reason = "Slow and low Will, careful"} ,
+             reason = "Slow " .. (check_abil_pct(mons, "Slow") or "buggy") .. "%, equip more Will?"} ,
         -- comparing "distort" instead of "distortion" works against Rift, randarts, and panlord "distorting touch"
         -- TODO: check to see if this catches dancing weapons?
         {conditions = {check_tdesc(mons, "[dD]istort"), you.branch() ~= "Zig"},
@@ -801,9 +796,10 @@ local status = {
                tier = 3,
              reason = mons:speed_description() .. " simulacrum and no rC, watch out!!"} ,
 
-        {conditions = {check(mons, "Doom Howl"), mons:is("ready_to_howl"), you.branch() ~= "Zig"},
+        {conditions = {check(mons, "Doom Howl"), you.branch() ~= "Zig", mons:is("ready_to_howl")
+                       and (check_abil_pct(mons, "Doom Howl") > 5 or false)},
                tier = 3,
-             reason = "Doom Howl in LOS, hex it or something"} ,
+             reason = "Doom Howl " .. (check_abil_pct(mons, "Doom Howl") or "buggy") .. "%, equip more Will or hex it or something"} ,
         {conditions = {check(mons, "Symbol of Torment"), you_res_torment() ~= true},
                tier = 3,
              reason = "Torment and not torment immune!"} ,
