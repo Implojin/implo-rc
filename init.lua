@@ -679,13 +679,13 @@ local status = {
         -- or string.find(m:desc(), "[pP]aralys")   ??
         local danger_table = {
         -- XXX: refactor this table so i'm not duplicating logic (like check_abil_pct) in the conditions and reason fields
-        {conditions = {check(mons, "Paralyse") and (check_abil_pct(mons, "Paralyse") > 5 or false)},
+        {conditions = {check_abil_pct(mons, "Paralyse") ~= nil and check_abil_pct(mons, "Paralyse") > 5},
                tier = 3,
              reason = "Paralyse " .. (check_abil_pct(mons, "Paralyse") or "buggy") .. "%, equip more Will?"} ,
-        {conditions = {check(mons, "Petrify") and (check_abil_pct(mons, "Petrify") > 5 or false)},
+        {conditions = {check_abil_pct(mons, "Petrify") ~= nil and check_abil_pct(mons, "Petrify") > 5},
                tier = 3,
              reason = "Petrify " .. (check_abil_pct(mons, "Petrify") or "buggy") .. "%, equip more Will?"} ,
-        {conditions = {check(mons, "Banishment") and (check_abil_pct(mons, "Banishment") > 5 or false)},
+        {conditions = {check_abil_pct(mons, "Banishment") ~= nil and check_abil_pct(mons, "Banishment") > 5},
                tier = 3,
              reason = "Banishment " .. (check_abil_pct(mons, "Banishment") or "buggy") .. "%, equip more Will?"} ,
         {conditions = {check(mons, "Stunning Burst"), you.res_shock() < 1},
@@ -698,7 +698,7 @@ local status = {
         {conditions = {check(mons, "Dream Dust")},
                tier = 2,
              reason = "Irresistible Dream Dust (" .. get_dream_dust_success_rate() .. "%), watch out!"} ,
-        {conditions = {check(mons, "Confusion Gaze") and (check_abil_pct(mons, "Confusion Gaze") > 5 or false)},
+        {conditions = {check_abil_pct(mons, "Confusion Gaze") ~= nil and check_abil_pct(mons, "Confusion Gaze") > 5},
                tier = 2,
              reason = "Confusion Gaze " .. (check_abil_pct(mons, "Confusion Gaze") or "buggy") .. "%, equip more Will?"} ,
         -- XXX: As far as I can tell, the only way to pull attack flavour (AF_WHATEVER) data is
@@ -713,13 +713,13 @@ local status = {
         {conditions = {check_tdesc(mons, "wand of paralysis"), you.willpower() < 3},
                tier = 3,
              reason = "Wand of Paralysis and low Will"} ,
-        {conditions = {check(mons, "Porkalator") and (check_abil_pct(mons, "Porkalator") > 5 or false)},
+        {conditions = {check_abil_pct(mons, "Porkalator") ~= nil and check_abil_pct(mons, "Porkalator") > 5},
                tier = 2,
              reason = "Porkalator " .. (check_abil_pct(mons, "Porkalator") or "buggy") .. "%, equip more Will?"} ,
-        {conditions = {check(mons, "Slow") and (check_abil_pct(mons, "Slow") > 5 or false)},
+        {conditions = {check_abil_pct(mons, "Slow") ~= nil and check_abil_pct(mons, "Slow") > 5},
                tier = 2,
              reason = "Slow " .. (check_abil_pct(mons, "Slow") or "buggy") .. "%, equip more Will?"} ,
-        {conditions = {check(mons, "Sentinel's Mark") and (check_abil_pct(mons, "Sentinel's Mark") > 5 or false)},
+        {conditions = {check_abil_pct(mons, "Sentinel's Mark") ~= nil and check_abil_pct(mons, "Sentinel's Mark") > 5},
                tier = 3,
              reason = "Sentinel's Mark " .. (check_abil_pct(mons, "Sentinel's Mark") or "buggy") .. "%, equip more Will?"} ,
         -- comparing "distort" instead of "distortion" works against Rift, randarts, and panlord "distorting touch"
@@ -799,8 +799,8 @@ local status = {
                tier = 3,
              reason = mons:speed_description() .. " simulacrum and no rC, watch out!!"} ,
 
-        {conditions = {check(mons, "Doom Howl"), you.branch() ~= "Zig", mons:is("ready_to_howl")
-                       and (check_abil_pct(mons, "Doom Howl") > 5 or false)},
+        {conditions = {mons:is("ready_to_howl"), you.branch() ~= "Zig",
+                       check_abil_pct(mons, "Doom Howl") ~= nil and check_abil_pct(mons, "Doom Howl") > 5},
                tier = 3,
              reason = "Doom Howl " .. (check_abil_pct(mons, "Doom Howl") or "buggy") .. "%, equip more Will or hex it or something"} ,
         {conditions = {check(mons, "Symbol of Torment"), you_res_torment() ~= true},
