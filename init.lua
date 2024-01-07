@@ -371,9 +371,9 @@ function check_abil_pct(mons, ability)
     local desc = mons:desc(true)
     -- if the ability exists in the full desc,
     if string.find(desc, ability) ~= nil then
-        -- try to extract "ability string, whitespace, optional <color>, (number%)" from the full desc
+        -- try to extract "ability string, whitespace, optional <color>, (decimal%)" from the full desc
         pct = string.match(desc, ability .. "%s+" .. "<?%l*>?" .. "%(%d+%%%)")
-        -- if our pattern exists, try to extract "number%"
+        -- if our pattern exists, try to extract the decimal
         if pct ~= nil then
             pct = tonumber(string.match(pct, "%d+"))
             if DEBUG_ABIL_PCT then crawl.mpr(ability .. "(%): " .. pct) end
@@ -593,7 +593,7 @@ local pending_message_warnings = {}
 local pending_player_warnings = {}
 
 local HP_WARN_T2_PERCENT = 60
-local HP_WARN_T3_PERCENT = 25
+local HP_WARN_T3_PERCENT = 40
 local LAST_HP = math.huge
 
 function construct_hp_warning()
@@ -893,7 +893,7 @@ local status = {
     end,
     _issue_player_warnings = function(self)
         for key,warning in ipairs(pending_player_warnings) do
-            self:_warn(warning)
+            self:_warn(warning,true)
             table.remove(pending_player_warnings, key)
         end
     end,
