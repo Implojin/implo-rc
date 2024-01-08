@@ -1031,6 +1031,10 @@ function c_answer_prompt(prompt)
         if prompt:find("Chain Lightning might hit") then return true end
         if prompt:find("Really attack near") then return true end
     end
+    if prompt:find("Really quaff the potion of lignification") then return true end
+    if prompt:find("Really attack barehanded") then return true end
+    if prompt:find("Shopping list: replace") then return false end
+    if prompt:find("Shopping list: remove") then return false end
     -- try to prevent the script from becoming stuck in a failed autopickup -> reissue autoexplore loop,
     -- if it fails to pick something up while adjacent to a closed door
     if prompt:find("Could not pick up") then
