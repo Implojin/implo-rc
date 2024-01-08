@@ -43,6 +43,8 @@ tile_show_threat_levels = tough, nasty, unusual
 
 cloud_status = true
 
+macros += M 'o' ===do_autoexplore
+
 # player tile things
 tile_weapon_offsets = 0,0
 tile_shield_offsets = 0,0
@@ -532,6 +534,7 @@ end
 -- Crawl doesn't send any kind of message when it stops autoexplore adjacent to a closed door.
 -- As a result, we have to guard against infinite loops here.
 local reissue_autoexplore_needed = false
+local force_autoexplore_stop = false
 local loop_guard = 0
 local done_exploring = false
 function maybe_reissue_autoexplore()
@@ -556,6 +559,12 @@ function maybe_reissue_autoexplore()
     end
     loop_guard = 0
     return false
+end
+
+function do_autoexplore()
+    reissue_autoexplore_needed = false
+    force_autoexplore_stop = false
+    crawl.sendkeys('o')
 end
 
 -- Returns true if this mons should be treated as threatening for autotravel, warning, and combat purposes.
@@ -1002,8 +1011,9 @@ function ch_stop_running(runmode)
     -- These conditions test if our autoexplore was interrupted early due to travel_open_doors = avoid.
     -- XXX: This check is imperfect, and is likely to send the script into infinite autoexplore loops.
     -- I've added an assert and some harder checks to maybe_reissue_autoexplore(), but this could still be improved.
-    if runmode == "explore_greedy" and check_adjacent_feat("closed_door", true) and you.feel_safe() then
-        reissue_autoexplore_needed = true
+    if runmode == "explore_greedy" and check_adjacent_feat("closed_door", true)
+       and you.feel_safe() and not force_autoexplore_stop then
+           reissue_autoexplore_needed = true
     end
 end
 
@@ -1015,11 +1025,16 @@ function ch_start_running(runmode)
     end
 end
 
--- skip chain lightning and shatter ally prompts when megazigging with death channel
 function c_answer_prompt(prompt)
+    -- skip chain lightning and shatter ally prompts when megazigging with death channel
     if you.branch() == "Zig" and you.status("death channelling") == true then
         if prompt:find("Chain Lightning might hit") then return true end
         if prompt:find("Really attack near") then return true end
+    end
+    -- try to prevent the script from becoming stuck in a failed autopickup -> reissue autoexplore loop,
+    -- if it fails to pick something up while adjacent to a closed door
+    if prompt:find("Could not pick up") then
+        force_autoexplore_stop = true
     end
 end
 }
