@@ -44,6 +44,7 @@ tile_show_threat_levels = tough, nasty, unusual
 cloud_status = true
 
 macros += M 'o' ===do_autoexplore
+macros += M \{-266} ===init_player_tile
 
 # player tile things
 tile_weapon_offsets = 0,0
