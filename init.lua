@@ -562,7 +562,7 @@ function maybe_reissue_autoexplore()
 end
 
 function do_autoexplore()
-    reissue_autoexplore_needed = false
+    crawl.setopt("travel_open_doors = avoid")
     force_autoexplore_stop = false
     crawl.sendkeys('o')
 end
@@ -963,9 +963,8 @@ local message_log_threat_table = {
 -- TODO: check messages for whether the player was shafted / teleported, and if so, stop reissuing autoexplore?
 -- I don't want the script blindly re-issuing actions if the floor situation has changed.
 function c_message(text, channel)
-    if string.find(text, "Done exploring.") then
-        done_exploring = true
-    end
+    if string.find(text, "Done exploring.") then done_exploring = true end
+    if string.find(text, "Partly explored") then done_exploring = true end
 
     for _,threat in ipairs(message_log_threat_table) do
         if string.find(text, threat.conditions) then
@@ -1012,7 +1011,7 @@ function ch_stop_running(runmode)
     -- XXX: This check is imperfect, and is likely to send the script into infinite autoexplore loops.
     -- I've added an assert and some harder checks to maybe_reissue_autoexplore(), but this could still be improved.
     if runmode == "explore_greedy" and check_adjacent_feat("closed_door", true)
-       and you.feel_safe() and not force_autoexplore_stop then
+       and you.feel_safe() and force_autoexplore_stop == false then
            reissue_autoexplore_needed = true
     end
 end
